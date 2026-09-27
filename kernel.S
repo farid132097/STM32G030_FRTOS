@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Sep 25, 2026, 11:25 PM
+ ; Last Modified : Sep 27, 2026, 08:25 AM
 
 
 
@@ -33,10 +33,12 @@
 DEF_KERNEL_VER_MAJOR  EQU        0x00000001                        ;set kernel version major
 DEF_KERNEL_VER_MINOR  EQU        0x00000000                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH  EQU        0x00000000                        ;set kernel version patch
-DEF_GPIO_TICK_DEBUG   EQU        0x00000000                        ;enable/disable gpio toggle
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
 DEF_KER_MAX_NTASK     EQU        0x00000003                        ;number of maximum tasks
 DEF_KER_STACK_SIZE    EQU        0x00000080                        ;stack size for each task
+DEF_DBG_GPIO_TICK_EN  EQU        0x00000000                        ;enable/disable gpio toggle
+DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
+DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;pin number, value 00-0fh
 ;;====================================kernel config end======================================;;
 
 
@@ -97,13 +99,18 @@ DEF_SCB_SHPR3         EQU        DEF_SCB_BASE        + 0x00000020  ;SCB->SHPR3 s
 
 ;;===========================define GPIO related addresses starting==========================;; 
 DEF_RCC_IOPENR        EQU        DEF_RCC_BASE        + 0x00000034  ;RCC->IOPENR start address
-DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;any value 0-5 (0->A, 1->B..)
-DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;any value 0-15
 DEF_DBG_OFF           EQU        DEF_DBG_GPIO_PORT   * 0x00000400  ;calculate offset
-DEF_DBG_GPIO_MODER    EQU        DEF_GPIO_BASE       + DEF_DBG_OFF ;calculate MODER addr
-DEF_DBG_GPIO_BSRR     EQU        DEF_DBG_GPIO_MODER  + 0x00000018  ;calculate BSRR addr
-DEF_DBG_BSRR_BS_VAL   EQU        ( 1 << DEF_DBG_GPIO_PIN)          ;calculate BS val
-DEF_DBG_BSRR_BR_VAL   EQU        ((1 << DEF_DBG_GPIO_PIN) + 16)    ;calculate BR val
+DEF_DBG_GPIO_BASE     EQU        DEF_GPIO_BASE       + DEF_DBG_OFF ;calculate offset
+DEF_DBG_GPIO_MODER    EQU        DEF_DBG_GPIO_BASE   + 0x00000000  ;calculate MODER addr
+DEF_DBG_GPIO_BSRR     EQU        DEF_DBG_GPIO_BASE   + 0x00000018  ;calculate BSRR addr
+DEF_DBG_GPIO_PORT_BM  EQU        ( 1 << DEF_DBG_GPIO_PORT )        ;calculate port bit mask
+DEF_DBG_GPIO_PIN_BM   EQU        ( 1 << DEF_DBG_GPIO_PIN )         ;calculate bit mask value
+DEF_DBG_GPIO_GM_OFF   EQU        ( DEF_DBG_GPIO_PIN << 1 )         ;calculate group offset
+DEF_DBG_GPIO_PIN_GM   EQU        ( 3 << DEF_DBG_GPIO_GM_OFF )      ;calculate group mask value
+DEF_DBG_GPIO_PIN_OUT  EQU        ( 1 << DEF_DBG_GPIO_GM_OFF )      ;calculate out group value
+DEF_DBG_BSRR_BS_VAL   EQU        ( DEF_DBG_GPIO_PIN_BM   )         ;calculate BS val
+DEF_DBG_BSRR_BR_OFF   EQU        ( DEF_DBG_GPIO_PIN + 16 )         ;calculate BR offset
+DEF_DBG_BSRR_BR_VAL   EQU        ( 1 << DEF_DBG_BSRR_BR_OFF )      ;calculate BR val
 ;;=============================define GPIO related addresses end=============================;; 
 
 
@@ -253,39 +260,34 @@ KER_TASK_TOUT         SPACE      8 * DEF_KER_MAX_NTASK             ;2 byte timeo
 
 
 
-;;===========================macro for gpio init starting====================================;; 
+;;==========================macro for debug gpio init starting===============================;; 
                       MACRO                                        ;macro start
 					  MACRO_GPIO_INIT  $ML                         ;macro name
 					  ;if debug disabled, skip
-					  MOVS       R0,   #DEF_GPIO_TICK_DEBUG        ;load device config
+					  MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
 					  BEQ        $ML.EXIT                          ;jump to exit
 					  ;enable clock from rcc
                       LDR        R0,   =DEF_RCC_IOPENR             ;load IOPENR address
 					  LDR        R1,   [R0]                        ;load IOPENR val
-					  MOVS       R2,   #0x01                       ;set val 1
-					  LSLS       R2,   R2, #DEF_DBG_GPIO_PORT      ;left shift to bit mask
+					  LDR        R2,   =DEF_DBG_GPIO_PORT_BM       ;load bit mask val
 	                  ORRS       R1,   R1, R2                      ;set bit WRT PORT
 					  STR        R1,   [R0]                        ;store val to IOPENR
-					  ;set ODR pin low
+					  ;set BSRR->BR->pin low
 					  LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
-					  MOVS       R1,   #0x01                       ;set val 1
-					  LSLS       R1,   R1, #DEF_DBG_GPIO_PIN       ;left shift to bit mask
-					  ADDS       R1,   R1, #16                     ;set BSRR->BRx bit
+					  LDR        R1,   =DEF_DBG_BSRR_BR_VAL        ;load BSRR->BR val
 					  STR        R1,   [R0]                        ;store val
 					  ;set pin as general purpose i/o
 					  LDR        R0,   =DEF_DBG_GPIO_MODER         ;load MODER address
 					  LDR        R1,   [R0]                        ;load MODER val
-					  MOVS       R2,   #0x03                       ;set val 3
-					  LSLS       R2,   R2, #DEF_DBG_GPIO_PIN       ;left shift to group mask
+					  LDR        R2,   =DEF_DBG_GPIO_PIN_GM        ;load MODER group mask val
 					  MVNS       R2,   R2                          ;invert bits
 					  ANDS       R1,   R1, R2                      ;clear mode bits
-					  MOVS       R2,   #0x01                       ;set val 1
-					  LSLS       R2,   R2, #DEF_DBG_GPIO_PIN       ;left shift to bit mask
+					  LDR        R2,   =DEF_DBG_GPIO_PIN_OUT       ;load MODER ->out val
 					  ORRS       R1,   R1, R2                      ;set output mode
 					  STR        R1,   [R0]                        ;store val to MODER
 $ML.EXIT
                       MEND                                         ;macro end
-;;==============================macro for gpio init end======================================;; 
+;;==========================macro for debug gpio init end====================================;; 
 
 
 
@@ -295,7 +297,7 @@ $ML.EXIT
                       MACRO                                        ;macro start
 					  MACRO_GPIO_SET   $ML                         ;macro name
 					  ;if debug disabled, skip
-					  MOVS       R0,   #DEF_GPIO_TICK_DEBUG        ;load device config
+					  MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
 					  BEQ        $ML.EXIT                          ;jump to exit
 					  LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
 					  LDR        R1,   =DEF_DBG_BSRR_BS_VAL        ;load bit set val
@@ -312,7 +314,7 @@ $ML.EXIT
 					  MACRO                                        ;macro start
                       MACRO_GPIO_CLEAR  $ML                        ;macro name
 					  ;if debug disabled, skip
-					  MOVS       R0,   #DEF_GPIO_TICK_DEBUG        ;load device config
+					  MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
 					  BEQ        $ML.EXIT                          ;jump to exit
 					  LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
 					  LDR        R1,   =DEF_DBG_BSRR_BR_VAL        ;load bit clear val
