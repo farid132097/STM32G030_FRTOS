@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Sep 27, 2026, 08:25 AM
+ ; Last Modified : Sep 27, 2026, 02:10 PM
 
 
 
@@ -34,8 +34,8 @@ DEF_KERNEL_VER_MAJOR  EQU        0x00000001                        ;set kernel v
 DEF_KERNEL_VER_MINOR  EQU        0x00000000                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH  EQU        0x00000000                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
-DEF_KER_MAX_NTASK     EQU        0x00000003                        ;number of maximum tasks
-DEF_KER_STACK_SIZE    EQU        0x00000080                        ;stack size for each task
+DEF_KER_MAX_NTHREAD   EQU        0x00000003                        ;number of maximum threads
+DEF_KER_STACK_SIZE    EQU        0x00000080                        ;stack size for each thread
 DEF_DBG_GPIO_TICK_EN  EQU        0x00000000                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;pin number, value 00-0fh
@@ -118,7 +118,7 @@ DEF_DBG_BSRR_BR_VAL   EQU        ( 1 << DEF_DBG_BSRR_BR_OFF )      ;calculate BR
 
 
 ;;==========================define stack size related value starting=========================;; 
-DEF_KER_STACK_SPACE   EQU        DEF_KER_MAX_NTASK * DEF_KER_STACK_SIZE   ;max stack size
+DEF_KER_STACK_SPACE   EQU        DEF_KER_MAX_NTHREAD * DEF_KER_STACK_SIZE   ;max stack size
 ;;============================define stack size related value end============================;; 
 
 
@@ -126,11 +126,11 @@ DEF_KER_STACK_SPACE   EQU        DEF_KER_MAX_NTASK * DEF_KER_STACK_SIZE   ;max s
 
 
 ;;================================define system macro starting===============================;; 
-TASK_READY            EQU        0x00                              ;ready state                 
-TASK_BLOCKED          EQU        0x01                              ;blocked state               
-TASK_SUSPENDED        EQU        0x02                              ;suspended state             
-TASK_CONS_LAT         EQU        0x03                              ;constant latency state      
-TASK_EXECUTING        EQU        0x04                              ;executing state             
+THREAD_STS_READY      EQU        0x00                              ;ready state                 
+THREAD_STS_BLOCKED    EQU        0x01                              ;blocked state               
+THREAD_STS_SUSPENDED  EQU        0x02                              ;suspended state             
+THREAD_STS_CONS_LAT   EQU        0x03                              ;constant latency state      
+THREAD_STS_EXECUTING  EQU        0x04                              ;executing state             
 ;;===================================define system macro end=================================;; 
 
 
@@ -153,17 +153,17 @@ TASK_EXECUTING        EQU        0x04                              ;executing st
 					  EXPORT     KER_ACTV_TICK_CNT
 					  EXPORT     KER_CPU_USAGE
 					  EXPORT     KER_CPU_USAGE_AVG
-                      EXPORT     KER_TASK_STACK
-					  EXPORT     KER_TASK_ID
-					  EXPORT     KER_NTASK
-                      EXPORT     KER_TASK_PSP
-					  EXPORT     KER_TASK_PRIO
-					  EXPORT     KER_TASK_HI_PRIO
-					  EXPORT     KER_TASK_PRIO_TID
-					  EXPORT     KER_TASK_SLEEP
-					  EXPORT     KER_TASK_YIELD
-					  EXPORT     KER_TASK_STS
-					  EXPORT     KER_TASK_TOUT
+                      EXPORT     KER_THREAD_STACK
+					  EXPORT     KER_THREAD_ID
+					  EXPORT     KER_NTHREAD
+                      EXPORT     KER_THREAD_PSP
+					  EXPORT     KER_THREAD_PRIO
+					  EXPORT     KER_THREAD_HI_PRIO
+					  EXPORT     KER_THREAD_PRIO_TID
+					  EXPORT     KER_THREAD_SLEEP
+					  EXPORT     KER_THREAD_YIELD
+					  EXPORT     KER_THREAD_STS
+					  EXPORT     KER_THREAD_TOUT
 ;;===========================global variable declaration end=================================;; 
 
 
@@ -176,20 +176,20 @@ KER_TICK_SS           SPACE      8                                 ;64 bit sub-s
 KER_TICK_S            SPACE      4                                 ;32 bit seconds counter
 KER_TICK_S_CNT        SPACE      4                                 ;tick counter for Seconds
 KER_TOTAL_TICK_CNT    SPACE      4                                 ;reference tick counter
-KER_ACTV_TICK_CNT     SPACE      4                                 ;active task entry counter
+KER_ACTV_TICK_CNT     SPACE      4                                 ;active thread entry counter
 KER_CPU_USAGE         SPACE      4                                 ;instantenious cpu usage
 KER_CPU_USAGE_AVG     SPACE      4                                 ;average cpu usage
-KER_NTASK             SPACE      4                                 ;total created tasks
-KER_TASK_STACK        SPACE      DEF_KER_STACK_SPACE + 0x08        ;total stack space
-KER_TASK_ID           SPACE      4                                 ;current task id
-KER_TASK_PSP          SPACE      4 * DEF_KER_MAX_NTASK             ;PSP for 10 tasks
-KER_TASK_PRIO         SPACE      4 * DEF_KER_MAX_NTASK             ;task priority
-KER_TASK_HI_PRIO      SPACE      4                                 ;highest priority
-KER_TASK_PRIO_TID     SPACE      4                                 ;highest priority task_id
-KER_TASK_SLEEP        SPACE      4 * DEF_KER_MAX_NTASK             ;task sleep duration
-KER_TASK_YIELD        SPACE      4                                 ;task yield status
-KER_TASK_STS          SPACE      4 * DEF_KER_MAX_NTASK             ;task status
-KER_TASK_TOUT         SPACE      8 * DEF_KER_MAX_NTASK             ;2 byte timeout timestamps
+KER_NTHREAD           SPACE      4                                 ;total created threads
+KER_THREAD_STACK      SPACE      DEF_KER_STACK_SPACE + 0x08        ;total stack space
+KER_THREAD_ID         SPACE      4                                 ;current thread id
+KER_THREAD_PSP        SPACE      4 * DEF_KER_MAX_NTHREAD           ;PSP for 10 threads
+KER_THREAD_PRIO       SPACE      4 * DEF_KER_MAX_NTHREAD           ;thread priority
+KER_THREAD_HI_PRIO    SPACE      4                                 ;highest priority
+KER_THREAD_PRIO_TID   SPACE      4                                 ;highest priority thread_id
+KER_THREAD_SLEEP      SPACE      4 * DEF_KER_MAX_NTHREAD           ;thread sleep duration
+KER_THREAD_YIELD      SPACE      4                                 ;thread yield status
+KER_THREAD_STS        SPACE      4 * DEF_KER_MAX_NTHREAD           ;thread status
+KER_THREAD_TOUT       SPACE      8 * DEF_KER_MAX_NTHREAD           ;2 byte timeout timestamps
 ;;=============================global variable definition end================================;; 
 
 
@@ -206,15 +206,15 @@ KER_TASK_TOUT         SPACE      8 * DEF_KER_MAX_NTASK             ;2 byte timeo
 
 ;;=========================global function declaration starting==============================;; 
 					  EXPORT     Kernel_Init
-					  EXPORT     Kernel_Start_Tasks
-					  EXPORT     Kernel_Task_Create
-					  EXPORT     Kernel_Idle_Task
-					  EXPORT     Kernel_Task_Sleep
+					  EXPORT     Kernel_Thread_Create
+					  EXPORT     Kernel_Thread_Idle
+					  EXPORT     Kernel_Thread_Sleep
+					  EXPORT     Kernel_Thread_Run_All
 					  EXPORT     Kernel_Tick_SS32_Get
 					  EXPORT     Kernel_Tick_SS64_Get
 					  EXPORT     Kernel_Tick_S_Get
 					  EXPORT     Kernel_Timeout_Set
-					  EXPORT     Kernel_Is_Timeout
+					  EXPORT     Kernel_Timeout_Status
 				      EXPORT     Kernel_CPU_Usage_x10_Get
 					  EXPORT     Kernel_CPU_Usage_Avg_x10_Get
 				      EXPORT     Kernel_Version_Major_Get
@@ -247,12 +247,12 @@ KER_TASK_TOUT         SPACE      8 * DEF_KER_MAX_NTASK             ;2 byte timeo
 					  STR        R1,   [R0]                        ;store cpu_usage val
 					  LDR        R0,   =KER_CPU_USAGE_AVG          ;load cpu_usage_avg addr
 					  STR        R1,   [R0]                        ;store cpu_usage_avg val
-					  LDR        R0,   =KER_NTASK                  ;load ntask addr
-					  STR        R1,   [R0]                        ;store ntask val
-                      LDR        R0,   =KER_TASK_ID                ;load task_id addr
-					  STR        R1,   [R0]                        ;store task_id val
-                      LDR        R0,   =KER_TASK_YIELD             ;load ntask addr
-					  STR        R1,   [R0]                        ;store ntask val
+					  LDR        R0,   =KER_NTHREAD                ;load nthread addr
+					  STR        R1,   [R0]                        ;store nthread val
+                      LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
+					  STR        R1,   [R0]                        ;store thread_id val
+                      LDR        R0,   =KER_THREAD_YIELD           ;load nthread addr
+					  STR        R1,   [R0]                        ;store nthread val
                       MEND                                         ;macro end
 ;;==========================macro for system variable init end===============================;; 
 
@@ -505,8 +505,8 @@ $ML.EXIT
 ;;================================macro for offset starting==================================;; 
 					  MACRO                                        ;macro start
 					  MACRO_OFFSET_CALC                            ;macro name
-					  LDR        R0,   =KER_TASK_ID                ;load task_id addr
-					  LDR        R0,   [R0]                        ;load task_id val
+					  LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R0,   [R0]                        ;load thread_id val
 					  LSLS       R0,   R0,  #0x02                  ;left shift 2 times to x4
                       MEND                                         ;macro end
 ;;===================================macro for offset end====================================;; 
@@ -518,7 +518,7 @@ $ML.EXIT
 					  MACRO                                        ;macro start
 					  MACRO_SAVE_PSP                               ;macro name
 					  MACRO_OFFSET_CALC                            ;calculate offset, ret R0
-					  LDR        R1,   =KER_TASK_PSP               ;load task psp addr base
+					  LDR        R1,   =KER_THREAD_PSP             ;load thread psp addr base
 					  ADD        R0,   R0,  R1                     ;calc offset from psp base
 					  MRS        R1,   PSP                         ;load PSP in R1
 					  STR        R1,   [R0]                        ;set val to reg
@@ -533,9 +533,9 @@ $ML.EXIT
 					  MACRO                                        ;macro start
 					  MACRO_LOAD_PSP                               ;macro name
 					  MACRO_OFFSET_CALC                            ;calculate offset, ret R0
-					  LDR        R1,   =KER_TASK_PSP               ;load task psp addr base
+					  LDR        R1,   =KER_THREAD_PSP             ;load thread psp addr base
 					  ADD        R0,   R0,  R1                     ;calc offset from psp base
-					  LDR        R0,   [R0]                        ;load task PSP
+					  LDR        R0,   [R0]                        ;load thread PSP
                       MEND                                         ;macro end
 ;;=================================macro for loading psp end=================================;; 
 
@@ -571,14 +571,14 @@ $ML.EXIT
 					  MACRO                                        ;macro start
         		      MACRO_KER_SLP_TIME_MGNT $ML                  ;macro name, local label
 					  MACRO_OFFSET_CALC                            ;calculate offset, ret R0
-					  LDR        R1,   =KER_TASK_SLEEP             ;load sleep addr
+					  LDR        R1,   =KER_THREAD_SLEEP           ;load sleep addr
 					  ADDS       R1,   R1, R0                      ;sleep base+offset
 					  LDR        R2,   [R1]                        ;load sleep duration
 					  CMP        R2,   #0x00                       ;compare with 0
 					  BEQ        $ML.TREADY                        ;jmp to label
 					  
 					  ;check if yield flag(R1 is sleep val addr, R2 is curr sleep val)
-					  LDR        R3,   =KER_TASK_YIELD             ;load yield flag addr
+					  LDR        R3,   =KER_THREAD_YIELD           ;load yield flag addr
 					  LDR        R3,   [R3]                        ;load yield flag val
 					  TST        R3,   R3                          ;test val
 					  BNE        $ML.TBLOCKED                      ;if !=0, skip decrement
@@ -587,13 +587,13 @@ $ML.SLPDEC                                                         ;sleep time d
 					  STR        R2,   [R1]                        ;store new val
 					  CMP        R2,   #0x00                       ;compare with 0
 					  BEQ        $ML.TREADY                        ;jmp to label
-$ML.TBLOCKED                                                       ;label->task blocked
-					  LDR        R1,   =TASK_BLOCKED               ;set status blocked
+$ML.TBLOCKED                                                       ;label->thread blocked
+					  LDR        R1,   =THREAD_STS_BLOCKED         ;set status blocked
 					  B          $ML.UPDSTS                        ;jmp to label
-$ML.TREADY                                                         ;label->task ready
-					  LDR        R1,   =TASK_READY                 ;set status ready
+$ML.TREADY                                                         ;label->thread ready
+					  LDR        R1,   =THREAD_STS_READY           ;set status ready
 $ML.UPDSTS                                                         ;label->update status
-					  LDR        R2,   =KER_TASK_STS               ;load status base addr
+					  LDR        R2,   =KER_THREAD_STS             ;load status base addr
 					  ADDS       R2,   R2, R0                      ;base+offset
 					  STR        R1,   [R2]                        ;store status
 $ML.EXIT
@@ -610,32 +610,32 @@ $ML.EXIT
 					  
 					  ;init values before loop entry
 					  MOVS       R0,   #0xFF                       ;set val
-					  LDR        R1,   =KER_TASK_HI_PRIO           ;load hi-prio addr
+					  LDR        R1,   =KER_THREAD_HI_PRIO         ;load hi-prio addr
 					  STR        R0,   [R1]                        ;store lowest priority
 					  MOVS       R0,   #0x00                       ;set val
-					  LDR        R1,   =KER_TASK_PRIO_TID          ;load prio tid addr
+					  LDR        R1,   =KER_THREAD_PRIO_TID        ;load prio tid addr
 					  STR        R0,   [R1]                        ;store prio tid
 					  MOVS       R0,   #0x00                       ;set val
-					  LDR        R1,   =KER_TASK_ID                ;load task_id addr
-					  STR        R0,   [R1]                        ;store task_id
+					  LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
+					  STR        R0,   [R1]                        ;store thread_id
 					  
 $ML2.LP_STRT                                                       ;label-> loop start
 					  MACRO_KER_SLP_TIME_MGNT $ML1                 ;time mangement
 					  
 					  ;calculate offset R0, load status 
-					  LDR        R1,   =KER_TASK_STS               ;load status base addr
+					  LDR        R1,   =KER_THREAD_STS             ;load status base addr
 					  ADDS       R1,   R1, R0                      ;status base+offset
 					  LDR        R1,   [R1]                        ;load status
 					  
-					  ;check if task ready
-					  LDR        R2,   =TASK_READY                 ;load ready status
+					  ;check if thread ready
+					  LDR        R2,   =THREAD_STS_READY           ;load ready status
 					  CMP        R1,   R2                          ;compare
 					  BNE        $ML2.BL_OR_LP                     ;jmp to label (blocked)
 					  
-					  ;task is ready
-					  LDR        R1,   =KER_TASK_HI_PRIO           ;load hi-prio addr
+					  ;thread is ready
+					  LDR        R1,   =KER_THREAD_HI_PRIO         ;load hi-prio addr
 					  LDR        R2,   [R1]                        ;load hi-prio val
-					  LDR        R3,   =KER_TASK_PRIO              ;load prio base addr
+					  LDR        R3,   =KER_THREAD_PRIO            ;load prio base addr
 					  ADDS       R3,   R3, R0                      ;prio base+offset
 					  LDR        R3,   [R3]                        ;load prio val
 					  
@@ -645,23 +645,23 @@ $ML2.LP_STRT                                                       ;label-> loop
 					  
 					  ;new high prio found
 					  STR        R3,   [R1]                        ;store new hi-prio
-					  LDR        R0,   =KER_TASK_ID                ;load task_id addr
-					  LDR        R0,   [R0]                        ;load task_id val
-					  LDR        R1,   =KER_TASK_PRIO_TID          ;load prio task_id addr
-					  STR        R0,   [R1]                        ;store prio task_id
+					  LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R0,   [R0]                        ;load thread_id val
+					  LDR        R1,   =KER_THREAD_PRIO_TID        ;load prio thread_id addr
+					  STR        R0,   [R1]                        ;store prio thread_id
 $ML2.BL_OR_LP                                                      ;label->blocked or low priority
-                      LDR        R0,   =KER_TASK_ID                ;load task_id addr
-					  LDR        R1,   [R0]                        ;load task_id val
+                      LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R1,   [R0]                        ;load thread_id val
 					  ADDS       R1,   R1, #1                      ;increment
-					  LDR        R2,   =KER_NTASK                  ;load ntask addr
-					  LDR        R2,   [R2]                        ;load ntask val
+					  LDR        R2,   =KER_NTHREAD                ;load nthread addr
+					  LDR        R2,   [R2]                        ;load nthread val
                       CMP        R1,   R2                          ;compare
-					  BHS        $ML2.LP_END                       ;task_id>=ntask
-					  STR        R1,   [R0]                        ;store new task_id
+					  BHS        $ML2.LP_END                       ;thread_id>=nthread
+					  STR        R1,   [R0]                        ;store new thread_id
 					  B          $ML2.LP_STRT                      ;loop start
 $ML2.LP_END                                                        ;loop complete
-					  LDR        R0,   =KER_TASK_ID                ;load task_id addr
-					  LDR        R1,   =KER_TASK_PRIO_TID          ;load prio tid addr
+					  LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R1,   =KER_THREAD_PRIO_TID        ;load prio tid addr
 					  LDR        R1,   [R1]                        ;load prio tid val
 					  STR        R1,   [R0]                        ;store new prio tid
 $ML2.EXIT
@@ -675,7 +675,7 @@ $ML2.EXIT
 ;;==========================macro for sub-seconds counter starting===========================;; 
 					  MACRO                                        ;macro start
 					  MACRO_SS_CNT     $ML                         ;macro name
-					  LDR        R0,   =KER_TASK_YIELD             ;load yield flag addr
+					  LDR        R0,   =KER_THREAD_YIELD           ;load yield flag addr
 					  LDR        R1,   [R0]                        ;load yield flag val
 					  TST        R1,   R1                          ;test val
 					  BNE        $ML.EXIT                          ;jmp to label
@@ -698,7 +698,7 @@ $ML.EXIT
 ;;============================macro for seconds counter starting=============================;; 
 					  MACRO                                        ;macro start
 					  MACRO_S_CNT      $ML                         ;macro name
-					  LDR        R0,   =KER_TASK_YIELD             ;load yield flag addr
+					  LDR        R0,   =KER_THREAD_YIELD           ;load yield flag addr
 					  LDR        R1,   [R0]                        ;load yield flag val
 					  TST        R1,   R1                          ;test val
 					  BNE        $ML.EXIT                          ;jmp to label
@@ -726,16 +726,16 @@ $ML.EXIT
 ;;========================macro for cpu usage calculation starting===========================;; 
 					  MACRO                                        ;macro start
 					  MACRO_CPU_USAGE  $ML                         ;macro name
-					  LDR        R0,   =KER_TASK_YIELD             ;load yield flag addr
+					  LDR        R0,   =KER_THREAD_YIELD           ;load yield flag addr
 					  LDR        R1,   [R0]                        ;load yield flag val
 					  TST        R1,   R1                          ;test val
 					  BNE        $ML.EXIT                          ;jmp to label
-					  LDR        R0,   =KER_TASK_ID                ;load task_id addr
-					  LDR        R1,   [R0]                        ;load task_id
+					  LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R1,   [R0]                        ;load thread_id
 					  LDR        R2,   =KER_ACTV_TICK_CNT          ;load active_tick_cnt addr
 					  LDR        R0,   [R2]                        ;load active_tick_cnt
 					  TST        R1,   R1                          ;check val
-					  BEQ        $ML.SKIP_INC                      ;if task = idle task, skip
+					  BEQ        $ML.SKIP_INC                      ;if thread = idle thread, skip
 					  ADDS       R0,   R0,  #1                     ;increment val
 					  STR        R0,   [R2]                        ;store val, R0 active_tick_cnt
 $ML.SKIP_INC                                                       ;label->no increment
@@ -771,7 +771,7 @@ $ML.EXIT                                                           ;label->exit
 ;;===========================macro for clear yield flag starting=============================;; 
 					  MACRO                                        ;macro start
 					  MACRO_CLEAR_YIELD_FLAG     $ML               ;macro name
-					  LDR        R0,   =KER_TASK_YIELD             ;load yield flag addr
+					  LDR        R0,   =KER_THREAD_YIELD           ;load yield flag addr
 					  MOVS       R1,   #0x00                       ;clear yield flag
 					  STR        R1,   [R0]                        ;store val
 $ML.EXIT
@@ -782,17 +782,17 @@ $ML.EXIT
 
 
 
-;;===================================idle task starting======================================;; 
-Kernel_Idle_Task
-                      ;Idle task, does nothing
-					  B          .                                  ;forever loop
-;;=====================================idle task end=========================================;; 
+;;===================================idle thread starting====================================;; 
+Kernel_Thread_Idle
+                      ;Idle thread, does nothing
+					  B          .                                 ;forever loop
+;;=====================================idle thread end=======================================;; 
 
 
 
 
 
-;;==================================demo task3 starting======================================;; 
+;;==================================kernel init starting=====================================;; 
 Kernel_Init
                       PUSH       {LR}
 					  
@@ -807,26 +807,26 @@ Kernel_Init
 					  ORRS       R1,   R2                          ;set all bits
 					  STR        R1,   [R0]                        ;store val
 					  
-					  LDR        R0,   =Kernel_Idle_Task           ;load idle task addr
+					  LDR        R0,   =Kernel_Thread_Idle         ;load idle thread addr
 					  MOVS       R1,   #0xFF                       ;lowest priority
-					  BL         Kernel_Task_Create                ;create idle task
+					  BL         Kernel_Thread_Create              ;create idle thread
 					  
 					  POP        {PC}
-;;====================================demo task3 end=========================================;; 
+;;====================================kernel init end========================================;; 
 
 
 
 
 
-;;=================================task create starting======================================;; 
-Kernel_Task_Create
-					  ;calculate stack top for this task (R0:R1 are used by arguments)
+;;=================================thread create starting====================================;; 
+Kernel_Thread_Create
+					  ;calculate stack top for this thread (R0:R1 are used by arguments)
 					  LDR        R2,   =DEF_KER_STACK_SIZE         ;load each stack size
-					  LDR        R3,   =KER_NTASK                  ;load ntask addr
-					  LDR        R3,   [R3]                        ;load ntask val
-					  ADDS       R3,   R3, #1                      ;task_id+1
-					  MULS       R2,   R3, R2                      ;(task_id+1)*size
-					  LDR        R3,   =KER_TASK_STACK             ;PSP start base
+					  LDR        R3,   =KER_NTHREAD                ;load nthread addr
+					  LDR        R3,   [R3]                        ;load nthread val
+					  ADDS       R3,   R3, #1                      ;thread_id+1
+					  MULS       R2,   R3, R2                      ;(thread_id+1)*size
+					  LDR        R3,   =KER_THREAD_STACK           ;PSP start base
 					  ADDS       R2,   R2, R3                      ;add offset
 					  
 					  ;create space for stack frame (R0:R1 arg, R2 stack top)
@@ -857,52 +857,52 @@ Kernel_Task_Create
                       STR        R3,   [R2, #60]                   ;xPSR (Thumb)
 					  
 					  ;calculate offset(R1 arg, R2 stack top)
-					  LDR        R0,   =KER_NTASK                  ;load ntask addr
-					  LDR        R0,   [R0]                        ;load ntask val
+					  LDR        R0,   =KER_NTHREAD                ;load nthread addr
+					  LDR        R0,   [R0]                        ;load nthread val
 					  LSLS       R0,   R0, #2                      ;left shift to x4
 					  
 					  ;store PSP (R0 offset, R1 arg, R2 stack top)
-					  LDR        R3,   =KER_TASK_PSP               ;PSP base
+					  LDR        R3,   =KER_THREAD_PSP             ;PSP base
 					  ADDS       R3,   R3, R0                      ;PSP base+offset
 					  STR        R2,   [R3]                        ;save PSP
 					  
 					  ;store priority (R0 offset, R1 arg)
-					  LDR        R2,   =KER_TASK_PRIO              ;priority base
+					  LDR        R2,   =KER_THREAD_PRIO            ;priority base
 					  ADDS       R2,   R2, R0                      ;priority base+offset
 					  STR        R1,   [R2]                        ;save priority
 					  
 					  ;store sleep (R0 offset)
-					  LDR        R1,   =KER_TASK_SLEEP             ;sleep base
+					  LDR        R1,   =KER_THREAD_SLEEP           ;sleep base
 					  MOVS       R2,   #0x00                       ;set sleep duration 0
 					  ADDS       R1,   R1, R0                      ;sleep base+offset
 					  STR        R2,   [R1]                        ;save sleep duration
 					  
 					  ;store status (R0 offset)
-					  LDR        R1,   =KER_TASK_STS               ;priority base
-					  LDR        R2,   =TASK_READY                 ;set status ready
+					  LDR        R1,   =KER_THREAD_STS             ;priority base
+					  LDR        R2,   =THREAD_STS_READY           ;set status ready
 					  ADDS       R1,   R1, R0                      ;priority base+offset
 					  STR        R2,   [R1]                        ;save priority
 					  
-					  ;increment ntask (R0 offset)
-					  LDR        R0,   =KER_NTASK                  ;load ntask addr
-					  LDR        R1,   [R0]                        ;load ntask val
-					  ADDS       R1,   R1, #1                      ;ntask+1
+					  ;increment nthread (R0 offset)
+					  LDR        R0,   =KER_NTHREAD                ;load nthread addr
+					  LDR        R1,   [R0]                        ;load nthread val
+					  ADDS       R1,   R1, #1                      ;nthread+1
 					  STR        R1,   [R0]                        ;save PSP
 					  
 					  BX         LR                                ;return
-;;====================================task create end========================================;; 
+;;====================================thread create end======================================;; 
 
 
 
 
 
-;;=================================start tasks starting======================================;; 
-Kernel_Start_Tasks
+;;=================================start threads starting====================================;; 
+Kernel_Thread_Run_All
                       ;configure SysTick timer
                       MACRO_SYSTICK_CONFIG                         ;configure systick
-					  ;calculate stack top for this task
+					  ;calculate stack top for this thread
 					  LDR        R0,   =DEF_KER_STACK_SIZE         ;load each stack size
-					  LDR        R1,   =KER_TASK_STACK             ;PSP start base
+					  LDR        R1,   =KER_THREAD_STACK           ;PSP start base
 					  ADDS       R0,   R0, R1                      ;add offset
 					  ;Setup PSP for main
                       MSR        PSP,  R0                          ;set PSP
@@ -911,8 +911,8 @@ Kernel_Start_Tasks
                       ORRS       R1,   R1, R2                      ;CONTROL.SPSEL = 1
                       MSR        CONTROL, R1                       ;switch to PSP
                       ISB                                          ;instruction barrier
-					  B          Kernel_Idle_Task                  ;call a task
-;;====================================start tasks end========================================;; 
+					  B          Kernel_Thread_Idle                ;call a thread
+;;====================================start threads end======================================;; 
 
 
 
@@ -955,28 +955,28 @@ PendSV_Handler
 
 
 
-;;==============================kernel task sleep starting===================================;; 
-Kernel_Task_Sleep
+;;==============================kernel thread sleep starting=================================;; 
+Kernel_Thread_Sleep
 					  CPSID      I                                 ;disable interrupts
 					  
 					  ;find offset (R0 arg)
-                      LDR        R1,   =KER_TASK_ID                ;load task_id addr
-					  LDR        R1,   [R1]                        ;load task_id val
+                      LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R1,   [R1]                        ;load thread_id val
 					  LSLS       R1,   R1, #2                      ;left shift 2 times to x4
 					  
 					  ;set sleep val (R0 arg, R1 offset)
-					  LDR        R2,   =KER_TASK_SLEEP             ;load sleep base addr
+					  LDR        R2,   =KER_THREAD_SLEEP           ;load sleep base addr
 					  ADDS       R2,   R2, R1                      ;add offset
 					  STR        R0,   [R2]                        ;store sleep duration
 					  
 					  ;set status (R1 offset)
-					  LDR        R2,   =KER_TASK_STS               ;load status base addr
+					  LDR        R2,   =KER_THREAD_STS             ;load status base addr
 					  ADDS       R2,   R2, R1                      ;add offset
-					  LDR        R1,   =TASK_BLOCKED               ;set status blocked
+					  LDR        R1,   =THREAD_STS_BLOCKED         ;set status blocked
 					  STR        R1,   [R2]                        ;store status
 					  
-					  ;set task yield flag
-                      LDR        R0,   =KER_TASK_YIELD             ;load ntask addr
+					  ;set thread yield flag
+                      LDR        R0,   =KER_THREAD_YIELD           ;load nthread addr
 					  MOVS       R1,   #0x01                       ;set flag
 					  STR        R1,   [R0]                        ;store val
 					  
@@ -988,7 +988,7 @@ Kernel_Task_Sleep
 					  
 					  CPSIE      I                                 ;enable interrupt
 					  BX         LR                                ;return
-;;=================================kernel task sleep end=====================================;; 
+;;=================================kernel thread sleep end===================================;; 
 
 
 
@@ -1034,9 +1034,9 @@ Kernel_Tick_S_Get
 Kernel_Timeout_Set
                       PUSH       {LR}
 					  MOV        R3,   R0                          ;copy reg
-                      LDR        R0,   =KER_TASK_TOUT              ;load timeout addr
-					  LDR        R1,   =KER_TASK_ID                ;load task_id addr
-					  LDR        R1,   [R1]                        ;load task_id val
+                      LDR        R0,   =KER_THREAD_TOUT            ;load timeout addr
+					  LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R1,   [R1]                        ;load thread_id val
 					  LSLS       R1,   R1, #3                      ;multiply by 8
 					  ADDS       R2,   R0, R1                      ;offset addr of timeout
 					  BL         Kernel_Tick_SS64_Get              ;get 64bit timestamp
@@ -1053,11 +1053,11 @@ Kernel_Timeout_Set
 
 
 ;;==============================kernel timeout set starting==================================;; 
-Kernel_Is_Timeout 
+Kernel_Timeout_Status 
                       PUSH       {LR}                              ;save return addr
-                      LDR        R0,   =KER_TASK_TOUT              ;load timeout addr
-					  LDR        R1,   =KER_TASK_ID                ;load task_id addr
-					  LDR        R1,   [R1]                        ;load task_id val
+                      LDR        R0,   =KER_THREAD_TOUT            ;load timeout addr
+					  LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R1,   [R1]                        ;load thread_id val
 					  LSLS       R1,   R1, #3                      ;multiply by 8
 					  ADDS       R2,   R0, R1                      ;offset addr of timeout
 					  LDR        R3,   [R2, #4]                    ;load high word
@@ -1074,7 +1074,7 @@ KER_IS_TOUT_FALSE
 KER_IS_TOUT_TRUE
                       MOVS       R0,   #0x01                       ;load 0
 KER_IS_TOUT_EXIT
-                      POP        {PC}                                ;return
+                      POP        {PC}                              ;return
 ;;=================================kernel timeout set end====================================;; 
 
 

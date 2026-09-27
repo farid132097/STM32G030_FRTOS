@@ -6,7 +6,7 @@
  * Source        : https://github.com/farid132097/STM32G030_RTOS
  * Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  * Created       : Sep 02, 2025, 09:30 PM
- * Last Modified : Sep 08, 2026, 01:33 PM
+ * Last Modified : Sep 27, 2026, 02:10 PM
  *
 */
 
@@ -22,15 +22,15 @@
 
 
 void     Kernel_Init(void);
-void     Kernel_Start_Tasks(void);
-void     Kernel_Task_Create(void (*func)(void), uint32_t priority);
-void     Kernel_Idle_Task(void);
-void     Kernel_Task_Sleep(uint32_t val);
+void     Kernel_Thread_Create(void (*func)(void), uint32_t prio);
+void     Kernel_Thread_Idle(void);
+void     Kernel_Thread_Sleep(uint32_t val);
+void     Kernel_Thread_Run_All(void);
 uint32_t Kernel_Tick_SS32_Get(void);
 uint64_t Kernel_Tick_SS64_Get(void);
 uint32_t Kernel_Tick_S_Get(void);
 void     Kernel_Timeout_Set(uint32_t val);
-uint32_t Kernel_Is_Timeout(void);
+uint32_t Kernel_Timeout_Status(void);
 uint32_t Kernel_CPU_Usage_x10_Get(void);
 uint32_t Kernel_CPU_Usage_Avg_x10_Get(void);
 uint8_t  Kernel_Version_Major_Get(void);

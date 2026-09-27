@@ -445,14 +445,14 @@
               <FilePath>.\kernel.s</FilePath>
             </File>
             <File>
-              <FileName>tasks.h</FileName>
+              <FileName>threads.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\tasks.h</FilePath>
+              <FilePath>.\threads.h</FilePath>
             </File>
             <File>
-              <FileName>tasks.c</FileName>
+              <FileName>threads.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\tasks.c</FilePath>
+              <FilePath>.\threads.c</FilePath>
             </File>
           </Files>
         </Group>
