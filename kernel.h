@@ -1,5 +1,6 @@
 
 
+
 /*
  * File          : kernel.h
  * Author        : MD. Faridul Islam (faridmdislam@gmail.com)
@@ -19,8 +20,6 @@
 #include "stdint.h"
 
 
-
-
 void     Kernel_Init(void);
 void     Kernel_Thread_Create(void (*func)(void), uint32_t prio);
 void     Kernel_Thread_Idle(void);
@@ -36,7 +35,10 @@ uint32_t Kernel_CPU_Usage_Avg_x10_Get(void);
 uint8_t  Kernel_Version_Major_Get(void);
 uint8_t  Kernel_Version_Minor_Get(void);
 uint8_t  Kernel_Version_Patch_Get(void);
+uint8_t  Kernel_Info_Char_Get(uint32_t index);
+
 
 #endif
+
 
 

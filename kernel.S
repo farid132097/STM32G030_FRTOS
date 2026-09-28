@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Sep 27, 2026, 02:10 PM
+ ; Last Modified : Sep 29, 2026, 12:38 AM
 
 
 
@@ -31,14 +31,15 @@
 
 ;;==================================kernel config starting===================================;; 
 DEF_KERNEL_VER_MAJOR  EQU        0x00000001                        ;set kernel version major
-DEF_KERNEL_VER_MINOR  EQU        0x00000000                        ;set kernel version minor
+DEF_KERNEL_VER_MINOR  EQU        0x00000001                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH  EQU        0x00000000                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
-DEF_KER_MAX_NTHREAD   EQU        0x00000003                        ;number of maximum threads
+DEF_KER_MAX_NTHREAD   EQU        0x00000005                        ;number of maximum threads
 DEF_KER_STACK_SIZE    EQU        0x00000080                        ;stack size for each thread
 DEF_DBG_GPIO_TICK_EN  EQU        0x00000000                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;pin number, value 00-0fh
+DEF_INFO_BLOCK_SIZE   EQU        0x00000200                        ;info block size 512 bytes
 ;;====================================kernel config end======================================;;
 
 
@@ -164,6 +165,7 @@ THREAD_STS_EXECUTING  EQU        0x04                              ;executing st
 					  EXPORT     KER_THREAD_YIELD
 					  EXPORT     KER_THREAD_STS
 					  EXPORT     KER_THREAD_TOUT
+					  EXPORT     KER_INFO_BLOCK
 ;;===========================global variable declaration end=================================;; 
 
 
@@ -196,6 +198,66 @@ KER_THREAD_TOUT       SPACE      8 * DEF_KER_MAX_NTHREAD           ;2 byte timeo
 
 
 
+;;===============================kernel info block starting==================================;; 
+KER_INFO_BLOCK
+                      DCB        0x0D, 0x0A, 0x0D, 0x0A
+                      DCB        0x4F, 0x53, 0x20, 0x45, 0x6E, 0x76, 0x69, 0x72
+                      DCB        0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x20, 0x20
+                      DCB        0x3A, 0x20, 0x46, 0x2D, 0x52, 0x54, 0x4F, 0x53
+                      DCB        0x0D, 0x0A
+                      DCB        0x4F, 0x53, 0x20, 0x50, 0x6C, 0x61, 0x74, 0x66
+                      DCB        0x6F, 0x72, 0x6D, 0x20, 0x20, 0x20, 0x20, 0x20
+                      DCB        0x3A, 0x20, 0x41, 0x52, 0x4D, 0x20, 0x43, 0x6F
+                      DCB        0x72, 0x74, 0x65, 0x78, 0x20, 0x4D, 0x30, 0x2B
+                      DCB        0x0D, 0x0A
+                      DCB        0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x43
+                      DCB        0x6F, 0x64, 0x65, 0x20, 0x20, 0x20, 0x20, 0x20
+                      DCB        0x3A, 0x20, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62
+                      DCB        0x2E, 0x63, 0x6F, 0x6D, 0x2F, 0x66, 0x61, 0x72
+                      DCB        0x69, 0x64, 0x31, 0x33, 0x32, 0x30, 0x39, 0x37
+                      DCB        0x0D, 0x0A
+                      DCB        0x41, 0x75, 0x74, 0x68, 0x6F, 0x72, 0x20, 0x45
+                      DCB        0x6D, 0x61, 0x69, 0x6C, 0x20, 0x20, 0x20, 0x20
+                      DCB        0x3A, 0x20, 0x66, 0x61, 0x72, 0x69, 0x64, 0x6D
+                      DCB        0x64, 0x69, 0x73, 0x6C, 0x61, 0x6D, 0x40, 0x67
+                      DCB        0x6D, 0x61, 0x69, 0x6C, 0x2E, 0x63, 0x6F, 0x6D
+                      DCB        0x0D, 0x0A
+                      DCB        0x4B, 0x65, 0x72, 0x6E, 0x65, 0x6C, 0x20, 0x56
+                      DCB        0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x20, 0x20
+                      DCB        0x3A, 0x20 
+					  DCB        DEF_KERNEL_VER_MAJOR +  0x30, 0x2E 
+					  DCB        DEF_KERNEL_VER_MINOR +  0x30, 0x2E 
+					  DCB        DEF_KERNEL_VER_PATCH +  0x30, 0x0D, 0x0A      
+                      DCB        0x4D, 0x61, 0x78, 0x20, 0x54, 0x68, 0x72, 0x65
+                      DCB        0x61, 0x64, 0x73, 0x20, 0x20, 0x20, 0x20, 0x20
+                      DCB        0x3A, 0x20, 0x31, 0x30, 0x0D, 0x0A
+                      DCB        0x53, 0x74, 0x61, 0x63, 0x6B, 0x20, 0x4D, 0x6F
+                      DCB        0x64, 0x65, 0x6C, 0x20, 0x20, 0x20, 0x20, 0x20
+                      DCB        0x3A, 0x20, 0x55, 0x6E, 0x69, 0x66, 0x69, 0x65
+                      DCB        0x64, 0x0D, 0x0A
+                      DCB        0x53, 0x74, 0x61, 0x63, 0x6B, 0x20, 0x53, 0x69
+                      DCB        0x7A, 0x65, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
+                      DCB        0x3A, 0x20, 0x31, 0x30, 0x32, 0x34, 0x20, 0x42
+                      DCB        0x0D, 0x0A
+                      DCB        0x47, 0x50, 0x49, 0x4F, 0x20, 0x54, 0x69, 0x63
+                      DCB        0x6B, 0x20, 0x44, 0x65, 0x62, 0x75, 0x67, 0x20
+                      DCB        0x3A, 0x20, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6C
+                      DCB        0x65, 0x64, 0x0D, 0x0A
+                      DCB        0x43, 0x50, 0x55, 0x20, 0x50, 0x4C, 0x4C, 0x20
+                      DCB        0x36, 0x34, 0x4D, 0x48, 0x7A, 0x20, 0x20, 0x20
+                      DCB        0x3A, 0x20, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6C
+                      DCB        0x65, 0x64, 0x0D, 0x0A
+					  DCB        0x0D, 0x0A, 0x0D, 0x0A
+					  DCB        0x00, 0x00
+KER_INFO_DATA_END
+					  SPACE      DEF_INFO_BLOCK_SIZE - (KER_INFO_DATA_END - KER_INFO_BLOCK)
+KER_INFO_BLOCK_END
+;;==================================kernel info block end====================================;;
+
+
+
+
+
 ;;==============================code area definition starting================================;; 
                       AREA       |.ram_code|, CODE, READONLY, ALIGN=4
 ;;=================================code area definition end==================================;; 
@@ -220,9 +282,23 @@ KER_THREAD_TOUT       SPACE      8 * DEF_KER_MAX_NTHREAD           ;2 byte timeo
 				      EXPORT     Kernel_Version_Major_Get
 					  EXPORT     Kernel_Version_Minor_Get
 					  EXPORT     Kernel_Version_Patch_Get
+					  EXPORT     Kernel_Info_Char_Get
 					  EXPORT     SysTick_Handler
 					  EXPORT     PendSV_Handler
 ;;===========================global function declaration end=================================;; 
+
+
+
+
+
+;;========================macro for loading system info starting=============================;; 
+                      MACRO                                        ;macro start
+					  MACRO_KER_INFO_INIT                          ;macro name
+					  MOVS       R0,   #0x00                       ;set val 0
+					  STR        R1,   [R0]                        ;store tick_ssL val
+					  
+                      MEND                                         ;macro end
+;;===========================macro for loading system info end===============================;;
 
 
 
@@ -1126,6 +1202,17 @@ Kernel_Version_Minor_Get
 ;;============================kernel version patch get starting==============================;; 
 Kernel_Version_Patch_Get
 					  MOVS       R0,   #DEF_KERNEL_VER_PATCH       ;load kernel ver patch val
+					  BX         LR                                ;return
+;;==============================kernel version patch get end=================================;; 
+
+
+
+
+
+;;============================kernel version patch get starting==============================;; 
+Kernel_Info_Char_Get
+                      LDR        R1,  =KER_INFO_BLOCK              ;load pointer addr
+                      LDRB       R0,  [R1, R0]                     ;load byte with offset
 					  BX         LR                                ;return
 ;;==============================kernel version patch get end=================================;; 
 

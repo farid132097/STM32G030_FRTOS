@@ -3,9 +3,36 @@
 #include "stm32g030xx.h"
 #include "kernel.h"
 #include "threads.h"
+#include "debug.h"
 #include "gpio.h"
 
-__attribute__((noreturn)) void Threads_Thread1(void){
+
+__attribute__((noreturn)) 
+void Threads_SysThread(void)
+{
+	  uint16_t loop_cnt = 0;
+	  Debug_Init(38400);
+	  
+	  //print all kernel info
+	  while(Kernel_Info_Char_Get(loop_cnt) != '\0')
+		{
+			  Debug_Tx_Byte(Kernel_Info_Char_Get(loop_cnt));
+			  loop_cnt++;
+		}
+	  
+	  while(1){
+		
+		    
+			  Kernel_Thread_Sleep(60000);
+		    
+	  }
+}
+
+
+
+__attribute__((noreturn)) 
+void Threads_Thread1(void)
+{
 	  
 	  GPIO_PA1_Init();
 	  
@@ -19,7 +46,11 @@ __attribute__((noreturn)) void Threads_Thread1(void){
 	  }
 }
 
-__attribute__((noreturn)) void Threads_Thread2(void){
+
+
+__attribute__((noreturn)) 
+void Threads_Thread2(void)
+{
 	  
 	  GPIO_PA2_Init();
 	  
@@ -33,7 +64,11 @@ __attribute__((noreturn)) void Threads_Thread2(void){
 	  }
 }
 
-__attribute__((noreturn)) void Threads_Thread3(void){
+
+
+__attribute__((noreturn)) 
+void Threads_Thread3(void)
+{
 	  
 	  GPIO_PA3_Init();
 	  
