@@ -3,7 +3,7 @@
 #include "macro_test.h"
 #include "kernel.h"
 #include "threads.h"
-
+#include "debug.h"
 
 int main(void){
 	
@@ -13,11 +13,12 @@ int main(void){
 	Macro_Test_GPIO_Low();
 	*/
 	
+	
 	Kernel_Init();
 	Kernel_Thread_Create(Threads_SysThread, 0);
 	Kernel_Thread_Create(Threads_Thread1, 1);
-	Kernel_Thread_Create(Threads_Thread2, 2);
-	Kernel_Thread_Create(Threads_Thread3, 3);
+	//Kernel_Thread_Create(Threads_Thread2, 2);
+	//Kernel_Thread_Create(Threads_Thread3, 3);
 	Kernel_Thread_Run_All();
 	
 	/*
@@ -27,6 +28,7 @@ int main(void){
 	Author Email    : faridmdislam@gmail.com
 	Kernel Version  : 1.1.0
 	Max Threads     : 10
+	Threads Created : 05
 	Stack Model     : Unified
 	Stack Size      : 1024 B
 	GPIO Tick Debug : Disabled

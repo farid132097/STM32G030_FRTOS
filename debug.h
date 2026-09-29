@@ -17,6 +17,10 @@
 
 #include "stm32g030xx.h"
 
+#define  DEBUG_TX_PA2
+//#define  DEBUG_TX_PB6
+
+
 void     Debug_Struct_Init(void);
 void     Debug_RX_Packet_Struct_Init(void);
 

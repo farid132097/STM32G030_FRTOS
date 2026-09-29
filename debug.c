@@ -126,22 +126,36 @@ void Debug_RX_Packet_Struct_Init(void){
 /*********************Debug Init Functions Start******************/
 
 void Debug_Config_GPIO(void){
-	//Enable clock to SysCfg
-	RCC->APBENR2  |= RCC_APBENR2_SYSCFGEN;
-	
-	
 	
 	#ifdef DEBUG_ENABLE_TX
 	//Enable clock to PORTA
+	
+	
+	#ifdef DEBUG_TX_PA2
+	if((RCC->IOPENR & RCC_IOPENR_GPIOAEN) != RCC_IOPENR_GPIOAEN){
+		RCC->IOPENR |= RCC_IOPENR_GPIOAEN;
+	}
+	
+	//Select AFR PA2
+	GPIOA->AFR[0] &=~ GPIO_AFRL_AFSEL2_Msk;
+	GPIOA->AFR[0] |=  (0x01 << GPIO_AFRL_AFSEL2_Pos);
+	//PA2 alternate function, USART2->TX
+	GPIOA->MODER  &=~GPIO_MODER_MODE2_Msk;
+	GPIOA->MODER  |= GPIO_MODER_MODE2_1;
+	#endif
+	
+	#ifdef DEBUG_TX_PB6
 	if((RCC->IOPENR & RCC_IOPENR_GPIOBEN) != RCC_IOPENR_GPIOBEN){
 		RCC->IOPENR |= RCC_IOPENR_GPIOBEN;
 	}
+	
 	//Select AFR PB6
 	GPIOB->AFR[0] &=~ GPIO_AFRL_AFSEL6_Msk;
 	GPIOB->AFR[0] |=  (0x00 << GPIO_AFRL_AFSEL6_Pos);
 	//PB6 alternate function, USART1->TX
 	GPIOB->MODER  &=~GPIO_MODER_MODE6_Msk;
 	GPIOB->MODER  |= GPIO_MODER_MODE6_1;
+	#endif
 	
 	/*if((RCC->IOPENR & RCC_IOPENR_GPIOBEN) != RCC_IOPENR_GPIOBEN){
 		RCC->IOPENR |= RCC_IOPENR_GPIOBEN;
@@ -172,41 +186,83 @@ void Debug_Config_GPIO(void){
 
 void Debug_Config_Clock(void){
   //add clock config
+	#ifdef DEBUG_TX_PA2
+	RCC->APBENR1  |= RCC_APBENR1_USART2EN; 
+	#endif
+	
+	#ifdef DEBUG_TX_PB6
 	RCC->APBENR2  |= RCC_APBENR2_USART1EN; 
+	#endif
 }
 
 void Debug_Config_BAUD_Rate(uint32_t baud_rate){
   //add baud rate config
 	SystemCoreClockUpdate();
+	
+	#ifdef DEBUG_TX_PA2
+	if(USART2->CR1 & USART_CR1_UE){
+    USART2->CR1 &=~USART_CR1_UE;
+	}
+  USART2->BRR   = (uint16_t)(SystemCoreClock/baud_rate);
+	#endif
+	
+	#ifdef DEBUG_TX_PB6
 	if(USART1->CR1 & USART_CR1_UE){
     USART1->CR1 &=~USART_CR1_UE;
 	}
   USART1->BRR   = (uint16_t)(SystemCoreClock/baud_rate);
+	#endif
 }
 
 
 void Debug_Config_Tx(void){
   //add tx config
+	#ifdef DEBUG_TX_PA2
+	USART2->CR1   |= USART_CR1_TE;
+	if((USART2->CR1 & USART_CR1_UE) != USART_CR1_UE){
+	  USART2->CR1 |= USART_CR1_UE;
+	}
+	#endif
+	
+	#ifdef DEBUG_TX_PB6
 	USART1->CR1   |= USART_CR1_TE;
 	if((USART1->CR1 & USART_CR1_UE) != USART_CR1_UE){
 	  USART1->CR1 |= USART_CR1_UE;
 	}
+	#endif
 }
 
 
 void Debug_Config_Rx(void){
   //add rx config
+	#ifdef DEBUG_TX_PA2
+	USART2->CR1   |= USART_CR1_RE;
+	if((USART2->CR1 & USART_CR1_UE) != USART_CR1_UE){
+	  USART2->CR1 |= USART_CR1_UE;
+	}
+	#endif
+	
+	#ifdef DEBUG_TX_PB6
 	USART1->CR1   |= USART_CR1_RE;
 	if((USART1->CR1 & USART_CR1_UE) != USART_CR1_UE){
 	  USART1->CR1 |= USART_CR1_UE;
 	}
+	#endif
 }
 
 void Debug_Config_Rx_Interrupt(void){
   //add rx int config
+	#ifdef DEBUG_TX_PA2
+	USART2->CR1  |= USART_CR1_RXNEIE_RXFNEIE;
+	NVIC_EnableIRQ(USART2_IRQn);
+	NVIC_SetPriority(USART2_IRQn, DEBUG_RX_CHAR_INT_PRIORITY);
+	#endif
+	
+	#ifdef DEBUG_TX_PB6
 	USART1->CR1  |= USART_CR1_RXNEIE_RXFNEIE;
 	NVIC_EnableIRQ(USART1_IRQn);
 	NVIC_SetPriority(USART1_IRQn, DEBUG_RX_CHAR_INT_PRIORITY);
+	#endif
 }
 
 void Debug_Clear_Interrupt_Flag(void){
@@ -215,14 +271,30 @@ void Debug_Clear_Interrupt_Flag(void){
 
 void Debug_Tx_Byte(uint8_t val){
   //tx byte
+	#ifdef DEBUG_TX_PA2
+	USART2->TDR = val;
+	while((USART2->ISR & USART_ISR_TC) != USART_ISR_TC);
+	USART2->ICR|=USART_ICR_TCCF;
+	#endif
+	
+	#ifdef DEBUG_TX_PB6
 	USART1->TDR = val;
 	while((USART1->ISR & USART_ISR_TC) != USART_ISR_TC);
 	USART1->ICR|=USART_ICR_TCCF;
+	#endif
 }
 
 uint8_t Debug_Rx_Byte(void){
   volatile uint8_t val = 0;
+	
+	#ifdef DEBUG_TX_PA2
+  val = (uint8_t)USART2->RDR;
+	#endif
+	
+	#ifdef DEBUG_TX_PB6
   val = (uint8_t)USART1->RDR;
+	#endif
+	
   return val;
 }
 
