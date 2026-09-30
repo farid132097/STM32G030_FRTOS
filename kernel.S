@@ -34,8 +34,8 @@ DEF_KERNEL_VER_MAJOR  EQU        0x00000001                        ;set kernel v
 DEF_KERNEL_VER_MINOR  EQU        0x00000001                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH  EQU        0x00000000                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
-DEF_KER_MAX_NTHREAD   EQU        0x00000002                        ;number of maximum threads
-DEF_KER_STACK_SIZE    EQU        128                        ;stack size for each thread
+DEF_KER_MAX_NTHREAD   EQU        0x00000005                        ;number of maximum threads
+DEF_KER_STACK_SIZE    EQU        0x00000200                        ;stack size for each thread
 DEF_DBG_GPIO_TICK_EN  EQU        0x00000000                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;pin number, value 00-0fh
@@ -119,7 +119,8 @@ DEF_DBG_BSRR_BR_VAL   EQU        ( 1 << DEF_DBG_BSRR_BR_OFF )      ;calculate BR
 
 
 ;;==========================define stack size related value starting=========================;; 
-DEF_KER_STACK_SPACE   EQU        DEF_KER_MAX_NTHREAD * DEF_KER_STACK_SIZE   ;max stack size
+DEF_KER_SYS_THREADS   EQU        DEF_KER_MAX_NTHREAD + 1
+DEF_KER_STACK_SPACE   EQU        DEF_KER_SYS_THREADS * DEF_KER_STACK_SIZE   ;max stack size
 ;;============================define stack size related value end============================;; 
 
 
@@ -184,14 +185,14 @@ KER_CPU_USAGE_AVG     SPACE      4                                 ;average cpu 
 KER_NTHREAD           SPACE      4                                 ;total created threads
 KER_THREAD_STACK      SPACE      DEF_KER_STACK_SPACE + 0x08        ;total stack space
 KER_THREAD_ID         SPACE      4                                 ;current thread id
-KER_THREAD_PSP        SPACE      4 * DEF_KER_MAX_NTHREAD           ;PSP for 10 threads
-KER_THREAD_PRIO       SPACE      4 * DEF_KER_MAX_NTHREAD           ;thread priority
+KER_THREAD_PSP        SPACE      4 * DEF_KER_SYS_THREADS           ;PSP for 10 threads
+KER_THREAD_PRIO       SPACE      4 * DEF_KER_SYS_THREADS           ;thread priority
 KER_THREAD_HI_PRIO    SPACE      4                                 ;highest priority
 KER_THREAD_PRIO_TID   SPACE      4                                 ;highest priority thread_id
-KER_THREAD_SLEEP      SPACE      4 * DEF_KER_MAX_NTHREAD           ;thread sleep duration
+KER_THREAD_SLEEP      SPACE      4 * DEF_KER_SYS_THREADS           ;thread sleep duration
 KER_THREAD_YIELD      SPACE      4                                 ;thread yield status
-KER_THREAD_STS        SPACE      4 * DEF_KER_MAX_NTHREAD           ;thread status
-KER_THREAD_TOUT       SPACE      8 * DEF_KER_MAX_NTHREAD           ;2 byte timeout timestamps
+KER_THREAD_STS        SPACE      4 * DEF_KER_SYS_THREADS           ;thread status
+KER_THREAD_TOUT       SPACE      8 * DEF_KER_SYS_THREADS           ;2 byte timeout timestamps
 ;;=============================global variable definition end================================;; 
 
 
@@ -291,6 +292,7 @@ KER_INFO_BLOCK_END
 					  EXPORT     Kernel_Version_Minor_Get
 					  EXPORT     Kernel_Version_Patch_Get
 					  EXPORT     Kernel_Info_Char_Get
+					  EXPORT     Kernel_Print_Info
 					  EXPORT     SysTick_Handler
 					  EXPORT     PendSV_Handler
 ;;===========================global function declaration end=================================;; 
@@ -324,6 +326,7 @@ $ML.UDIV32_NO_SUB
 ;;========================macro for loading system info starting=============================;; 
                       MACRO                                        ;macro start
 					  MACRO_KER_INFO_INIT                          ;macro name
+					  ;update version info
 					  LDR        R0,   =KER_VERSION_INFO           ;load addr
 					  MOVS       R1,   #DEF_KERNEL_VER_MAJOR       ;load addr
 					  ADDS       R1,   R1, #0x30                   ;add 48
@@ -334,6 +337,7 @@ $ML.UDIV32_NO_SUB
 					  MOVS       R1,   #DEF_KERNEL_VER_PATCH       ;load addr
 					  ADDS       R1,   R1, #0x30                   ;add 48
 					  STRB       R1,   [R0, #22]                   ;offset store
+					  ;update max number of threads info
 					  LDR        R0,   =DEF_KER_MAX_NTHREAD        ;load max nthread
 					  MOVS       R1,   #10                         ;divider
                       MACRO_KER_UDIV32 DIV1                        ;divide by 10
@@ -345,9 +349,24 @@ $ML.UDIV32_NO_SUB
 					  LDR        R2,   =KER_MAX_THREAD_INFO        ;load addr
 					  STRB       R0,   [R2, #18]                   ;offset store
 					  STRB       R1,   [R2, #19]                   ;offset store
+					  ;update threads created info
+					  LDR        R0,   =KER_NTHREAD                ;load nthread addr
+					  LDR        R0,   [R0]                        ;load nthread val
+					  SUBS       R0,   R0, #1                      ;discard idle thread
+					  MOVS       R1,   #10                         ;divider
+					  MACRO_KER_UDIV32 DIV2                        ;divide by 10
+					  MOVS       R3,   #0xFF                       ;copy val
+					  ANDS       R0,   R0, R3                      ;take LSByte
+					  ANDS       R1,   R1, R3                      ;take LSByte
+					  ADDS       R0,   R0, #0x30                   ;add 48
+					  ADDS       R1,   R1, #0x30                   ;add 48
+					  LDR        R2,   =KER_THREADS_CREATED_INFO   ;load addr
+					  STRB       R0,   [R2, #18]                   ;offset store
+					  STRB       R1,   [R2, #19]                   ;offset store
+					  ;update stack size info
 					  LDR        R0,   =DEF_KER_STACK_SIZE         ;load max nthread
 					  LDR        R1,   =1000                       ;divider
-                      MACRO_KER_UDIV32 DIV2                        ;divide by 1000
+                      MACRO_KER_UDIV32 DIV3                        ;divide by 1000
 					  MOVS       R3,   #0xFF                       ;copy val
 					  ANDS       R0,   R0, R3                      ;take LSByte
 					  ADDS       R0,   R0, #0x30                   ;add 48
@@ -355,23 +374,24 @@ $ML.UDIV32_NO_SUB
 					  STRB       R0,   [R2, #18]                   ;offset store
 					  MOVS       R0,   R1                          ;copy remainder
 					  MOVS       R1,   #100                        ;load val
-					  MACRO_KER_UDIV32 DIV3                        ;divide by 100
+					  MACRO_KER_UDIV32 DIV4                        ;divide by 100
 					  MOVS       R3,   #0xFF                       ;copy val
 					  ANDS       R0,   R0, R3                      ;take LSByte
 					  ADDS       R0,   R0, #0x30                   ;add 48
 					  LDR        R2,   =KER_STACK_SIZE_INFO        ;load addr
 					  STRB       R0,   [R2, #19]                   ;offset store
-					  ;MOVS       R0,   R1                          ;copy remainder
-					  ;MOVS       R1,   #10                         ;load val
-					  ;MACRO_KER_UDIV32 DIV4                        ;divide by 10
-					  ;MOVS       R3,   #0xFF                       ;copy val
-					  ;ANDS       R0,   R0, R3                      ;take LSByte
-					  ;ADDS       R0,   R0, #0x30                   ;add 48
-					  ;LDR        R2,   =KER_STACK_SIZE_INFO        ;load addr
-					  ;STRB       R0,   [R2, #20]                   ;offset store
-					  ;MOVS       R3,   #0xFF                       ;copy val
-					  ;ANDS       R1,   R1, R3                      ;take LSByte
-					  ;STRB       R1,   [R2, #21]                   ;offset store
+					  MOVS       R0,   R1                          ;copy remainder
+					  MOVS       R1,   #10                         ;load val
+					  MACRO_KER_UDIV32 DIV5                        ;divide by 10
+					  MOVS       R3,   #0xFF                       ;copy val
+					  ANDS       R0,   R0, R3                      ;take LSByte
+					  ADDS       R0,   R0, #0x30                   ;add 48
+					  LDR        R2,   =KER_STACK_SIZE_INFO        ;load addr
+					  STRB       R0,   [R2, #20]                   ;offset store
+					  MOVS       R3,   #0xFF                       ;copy val
+					  ANDS       R1,   R1, R3                      ;take LSByte
+					  ADDS       R1,   R1, #0x30                   ;add 48
+					  STRB       R1,   [R2, #21]                   ;offset store
                       MEND                                         ;macro end
 ;;===========================macro for loading system info end===============================;;
 
@@ -1329,11 +1349,23 @@ Kernel_Info_Char_Get
 
 
 
+;;===============================kernel print info starting==================================;; 
+Kernel_Print_Info
+                      LDR        R1,  =KER_INFO_BLOCK              ;load pointer addr
+                      LDRB       R0,  [R1, R0]                     ;load byte with offset
+					  BX         LR                                ;return
+;;=================================kernel print info end=====================================;;  
+
+
+
+
+
+;;====================================kernel file end========================================;; 
 					  ALIGN      4
 					  END                                          ;end of file
-					  
-					  
+;;====================================kernel file end========================================;; 
 
-    
-	
-	
+
+
+
+

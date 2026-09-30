@@ -12,9 +12,11 @@ void Threads_SysThread(void)
 {
 	  uint16_t loop_cnt = 0;
 	  Debug_Init(38400);
+	  Debug_Tx_Text_NL("DebugStarted");
 	  
 	  //print all kernel info
-	  while(Kernel_Info_Char_Get(loop_cnt) != '\0')
+	  //while(loop_cnt <= 300)
+	  while(Kernel_Info_Char_Get(loop_cnt) != 0x00)
 		{
 			  Debug_Tx_Byte(Kernel_Info_Char_Get(loop_cnt));
 			  loop_cnt++;
