@@ -35,7 +35,7 @@ DEF_KERNEL_VER_MINOR  EQU        0x00000001                        ;set kernel v
 DEF_KERNEL_VER_PATCH  EQU        0x00000000                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
 DEF_KER_MAX_NTHREAD   EQU        0x00000005                        ;number of maximum threads
-DEF_KER_STACK_SIZE    EQU        0x00000200                        ;stack size for each thread
+DEF_KER_STACK_SIZE    EQU        0x00000100                        ;stack size for each thread
 DEF_DBG_GPIO_TICK_EN  EQU        0x00000000                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;pin number, value 00-0fh
@@ -167,6 +167,7 @@ THREAD_STS_EXECUTING  EQU        0x04                              ;executing st
 					  EXPORT     KER_THREAD_STS
 					  EXPORT     KER_THREAD_TOUT
 					  EXPORT     KER_INFO_BLOCK
+				      EXPORT     KER_TMP_VAR
 ;;===========================global variable declaration end=================================;; 
 
 
@@ -193,6 +194,7 @@ KER_THREAD_SLEEP      SPACE      4 * DEF_KER_SYS_THREADS           ;thread sleep
 KER_THREAD_YIELD      SPACE      4                                 ;thread yield status
 KER_THREAD_STS        SPACE      4 * DEF_KER_SYS_THREADS           ;thread status
 KER_THREAD_TOUT       SPACE      8 * DEF_KER_SYS_THREADS           ;2 byte timeout timestamps
+KER_TMP_VAR           SPACE      4                                 ;temporary variables
 ;;=============================global variable definition end================================;; 
 
 
@@ -246,7 +248,7 @@ KER_STACK_SIZE_INFO
                       DCB        0x7A, 0x65, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
                       DCB        0x3A, 0x20, 0x30, 0x30, 0x30, 0x30, 0x20, 0x42
                       DCB        0x0D, 0x0A
-KER_GPIO_DEBUG_INFO
+KER_GPIO_TICK_DEBUG_INFO
                       DCB        0x47, 0x50, 0x49, 0x4F, 0x20, 0x54, 0x69, 0x63
                       DCB        0x6B, 0x20, 0x44, 0x65, 0x62, 0x75, 0x67, 0x20
                       DCB        0x3A, 0x20, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6C
@@ -325,7 +327,7 @@ $ML.UDIV32_NO_SUB
 
 ;;========================macro for loading system info starting=============================;; 
                       MACRO                                        ;macro start
-					  MACRO_KER_INFO_INIT                          ;macro name
+					  MACRO_KER_INFO_INIT   $ML                    ;macro name
 					  ;update version info
 					  LDR        R0,   =KER_VERSION_INFO           ;load addr
 					  MOVS       R1,   #DEF_KERNEL_VER_MAJOR       ;load addr
@@ -364,14 +366,22 @@ $ML.UDIV32_NO_SUB
 					  STRB       R0,   [R2, #18]                   ;offset store
 					  STRB       R1,   [R2, #19]                   ;offset store
 					  ;update stack size info
+					  LDR        R0,   =KER_TMP_VAR                ;load max nthread
+					  MOVS       R1,   #0                          ;load val
+					  STR        R1,   [R0]
 					  LDR        R0,   =DEF_KER_STACK_SIZE         ;load max nthread
 					  LDR        R1,   =1000                       ;divider
                       MACRO_KER_UDIV32 DIV3                        ;divide by 1000
 					  MOVS       R3,   #0xFF                       ;copy val
 					  ANDS       R0,   R0, R3                      ;take LSByte
+					  BEQ        $ML.VAL_0_SKIP                    ;skip if 0
 					  ADDS       R0,   R0, #0x30                   ;add 48
 					  LDR        R2,   =KER_STACK_SIZE_INFO        ;load addr
 					  STRB       R0,   [R2, #18]                   ;offset store
+					  B          $ML.SEC_CHAR                      ;jmp to 2nd char
+$ML.VAL_0_SKIP
+                      
+$ML.SEC_CHAR
 					  MOVS       R0,   R1                          ;copy remainder
 					  MOVS       R1,   #100                        ;load val
 					  MACRO_KER_UDIV32 DIV4                        ;divide by 100
@@ -392,6 +402,48 @@ $ML.UDIV32_NO_SUB
 					  ANDS       R1,   R1, R3                      ;take LSByte
 					  ADDS       R1,   R1, #0x30                   ;add 48
 					  STRB       R1,   [R2, #21]                   ;offset store
+					  ;update gpio tick debug info
+					  MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load config
+					  BEQ        $ML.TICK_DBG_SKIP                 ;jump to exit
+					  LDR        R0,   =KER_GPIO_TICK_DEBUG_INFO   ;load addr
+					  MOVS       R1,   #0x45                       ;load char
+					  STRB       R1,   [R0, #18]                   ;offset store
+					  MOVS       R1,   #0x6E                       ;load char
+					  STRB       R1,   [R0, #19]                   ;offset store
+					  MOVS       R1,   #0x61                       ;load char
+					  STRB       R1,   [R0, #20]                   ;offset store
+					  MOVS       R1,   #0x62                       ;load char
+					  STRB       R1,   [R0, #21]                   ;offset store
+					  MOVS       R1,   #0x6C                       ;load char
+					  STRB       R1,   [R0, #22]                   ;offset store
+					  MOVS       R1,   #0x65                       ;load char
+					  STRB       R1,   [R0, #23]                   ;offset store
+					  MOVS       R1,   #0x64                       ;load char
+					  STRB       R1,   [R0, #24]                   ;offset store
+					  MOVS       R1,   #0x20                       ;load char
+					  STRB       R1,   [R0, #25]                   ;offset store DEF_64MHZ_PLL_ENABLE
+$ML.TICK_DBG_SKIP
+                      ;update cpu pll info
+					  MOVS       R0,   #DEF_64MHZ_PLL_ENABLE       ;load config
+					  BEQ        $ML.CPU_PLL_STATUS_SKIP           ;jump to exit
+					  LDR        R0,   =KER_PLL_STATUS_INFO        ;load addr
+					  MOVS       R1,   #0x45                       ;load char
+					  STRB       R1,   [R0, #18]                   ;offset store
+					  MOVS       R1,   #0x6E                       ;load char
+					  STRB       R1,   [R0, #19]                   ;offset store
+					  MOVS       R1,   #0x61                       ;load char
+					  STRB       R1,   [R0, #20]                   ;offset store
+					  MOVS       R1,   #0x62                       ;load char
+					  STRB       R1,   [R0, #21]                   ;offset store
+					  MOVS       R1,   #0x6C                       ;load char
+					  STRB       R1,   [R0, #22]                   ;offset store
+					  MOVS       R1,   #0x65                       ;load char
+					  STRB       R1,   [R0, #23]                   ;offset store
+					  MOVS       R1,   #0x64                       ;load char
+					  STRB       R1,   [R0, #24]                   ;offset store
+					  MOVS       R1,   #0x20                       ;load char
+					  STRB       R1,   [R0, #25]                   ;offset store 
+$ML.CPU_PLL_STATUS_SKIP
                       MEND                                         ;macro end
 ;;===========================macro for loading system info end===============================;;
 
@@ -1091,7 +1143,7 @@ Kernel_Thread_Create
 Kernel_Thread_Run_All
                       ;configure SysTick timer
                       MACRO_SYSTICK_CONFIG                         ;configure systick
-					  MACRO_KER_INFO_INIT                          ;init kernel info
+					  MACRO_KER_INFO_INIT    DBG_INFO              ;init kernel info
 					  ;calculate stack top for this thread
 					  LDR        R0,   =DEF_KER_STACK_SIZE         ;load each stack size
 					  LDR        R1,   =KER_THREAD_STACK           ;PSP start base
