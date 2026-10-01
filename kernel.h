@@ -36,7 +36,7 @@ uint8_t  Kernel_Version_Major_Get(void);
 uint8_t  Kernel_Version_Minor_Get(void);
 uint8_t  Kernel_Version_Patch_Get(void);
 uint8_t  Kernel_Info_Char_Get(uint32_t index);
-
+void     Kernel_Print_Info(void (*func)(uint8_t));
 
 #endif
 

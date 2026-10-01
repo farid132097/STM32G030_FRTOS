@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Sep 29, 2026, 12:38 AM
+ ; Last Modified : Oct 01, 2026, 04:28 PM
 
 
 
@@ -32,7 +32,7 @@
 ;;==================================kernel config starting===================================;; 
 DEF_KERNEL_VER_MAJOR  EQU        0x00000001                        ;set kernel version major
 DEF_KERNEL_VER_MINOR  EQU        0x00000001                        ;set kernel version minor
-DEF_KERNEL_VER_PATCH  EQU        0x00000000                        ;set kernel version patch
+DEF_KERNEL_VER_PATCH  EQU        0x00000001                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
 DEF_KER_MAX_NTHREAD   EQU        0x00000005                        ;number of maximum threads
 DEF_KER_STACK_SIZE    EQU        0x00000100                        ;stack size for each thread
@@ -366,22 +366,14 @@ $ML.UDIV32_NO_SUB
 					  STRB       R0,   [R2, #18]                   ;offset store
 					  STRB       R1,   [R2, #19]                   ;offset store
 					  ;update stack size info
-					  LDR        R0,   =KER_TMP_VAR                ;load max nthread
-					  MOVS       R1,   #0                          ;load val
-					  STR        R1,   [R0]
 					  LDR        R0,   =DEF_KER_STACK_SIZE         ;load max nthread
 					  LDR        R1,   =1000                       ;divider
                       MACRO_KER_UDIV32 DIV3                        ;divide by 1000
 					  MOVS       R3,   #0xFF                       ;copy val
 					  ANDS       R0,   R0, R3                      ;take LSByte
-					  BEQ        $ML.VAL_0_SKIP                    ;skip if 0
 					  ADDS       R0,   R0, #0x30                   ;add 48
 					  LDR        R2,   =KER_STACK_SIZE_INFO        ;load addr
 					  STRB       R0,   [R2, #18]                   ;offset store
-					  B          $ML.SEC_CHAR                      ;jmp to 2nd char
-$ML.VAL_0_SKIP
-                      
-$ML.SEC_CHAR
 					  MOVS       R0,   R1                          ;copy remainder
 					  MOVS       R1,   #100                        ;load val
 					  MACRO_KER_UDIV32 DIV4                        ;divide by 100
@@ -1393,8 +1385,8 @@ Kernel_Version_Patch_Get
 
 ;;============================kernel version patch get starting==============================;; 
 Kernel_Info_Char_Get
-                      LDR        R1,  =KER_INFO_BLOCK              ;load pointer addr
-                      LDRB       R0,  [R1, R0]                     ;load byte with offset
+                      LDR        R1,   =KER_INFO_BLOCK             ;load pointer addr
+                      LDRB       R0,   [R1, R0]                    ;load byte with offset
 					  BX         LR                                ;return
 ;;==============================kernel version patch get end=================================;; 
 
@@ -1403,9 +1395,19 @@ Kernel_Info_Char_Get
 
 ;;===============================kernel print info starting==================================;; 
 Kernel_Print_Info
-                      LDR        R1,  =KER_INFO_BLOCK              ;load pointer addr
-                      LDRB       R0,  [R1, R0]                     ;load byte with offset
-					  BX         LR                                ;return
+                      PUSH       {R4, R5,  LR}                     ;save return addr
+					  MOVS       R4,   R0                          ;copy function pointer
+					  MOVS       R5,   #0                          ;set loop cnt 0
+KER_PRINT_CHAR        
+                      MOVS       R0,   R5                          ;copy
+					  BL         Kernel_Info_Char_Get              ;get char
+					  TST        R0,   R0                          ;check if 0
+					  BEQ        KER_PRINT_EXIT                    ;exit from func
+					  BLX        R4                                ;jmp to func ptr
+					  ADDS       R5,   R5, #1                      ;increment
+					  BL         KER_PRINT_CHAR                    ;jmp to label
+KER_PRINT_EXIT
+					  POP        {R4, R5, PC}                      ;return
 ;;=================================kernel print info end=====================================;;  
 
 
