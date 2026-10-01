@@ -34,8 +34,8 @@ DEF_KERNEL_VER_MAJOR  EQU        0x00000001                        ;set kernel v
 DEF_KERNEL_VER_MINOR  EQU        0x00000001                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH  EQU        0x00000001                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
-DEF_KER_MAX_NTHREAD   EQU        0x00000005                        ;number of maximum threads
-DEF_KER_STACK_SIZE    EQU        0x00000100                        ;stack size for each thread
+DEF_KER_MAX_NTHREAD   EQU        0x00000003                        ;number of maximum threads
+DEF_KER_STACK_SIZE    EQU        0x00000200                        ;stack size for each thread
 DEF_DBG_GPIO_TICK_EN  EQU        0x00000000                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;pin number, value 00-0fh
