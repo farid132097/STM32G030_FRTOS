@@ -3,69 +3,41 @@
 <pre>
 <h1>µVision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: µVision V5.41.0.0
-Copyright (C) 2024 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: faridul islam
-NA
-User-based license: Keil MDK Community (non-commercial free of charge)
-Valid until: Jun 1 2033. Cached until: Oct 7 2026
+IDE-Version: µVision V5.43.1.0
+Copyright (C) 2025 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: Md. Faridul Islam, NA, LIC=----
  
 Tool Versions:
-Toolchain:       Keil MDK Community (non-commercial free of charge  Version: 5.41.0.0
-Toolchain Path:  C:\Keil\ARM\ARMCLANG\Bin
-C Compiler:      ArmClang.exe V6.22
-Assembler:       Armasm.exe V6.22
-Linker/Locator:  ArmLink.exe V6.22
-Library Manager: ArmAr.exe V6.22
-Hex Converter:   FromElf.exe V6.22
-CPU DLL:         SARMCM3.DLL V5.41.0.0
+Toolchain:       MDK-Lite  Version: 5.43.0.0
+Toolchain Path:  C:\Users\Farid\AppData\Local\Keil_v5\ARM\ARMCLANG\Bin
+C Compiler:      ArmClang.exe V6.24
+Assembler:       Armasm.exe V6.24
+Linker/Locator:  ArmLink.exe V6.24
+Library Manager: ArmAr.exe V6.24
+Hex Converter:   FromElf.exe V6.24
+CPU DLL:         SARMCM3.DLL V5.43.0.0
 Dialog DLL:      DARMCM1.DLL V1.19.6.0
-Target DLL:      CMSIS_AGDI.dll V1.33.21.0
+Target DLL:      CMSIS_AGDI.dll V1.33.24.0
 Dialog DLL:      TARMCM1.DLL V1.14.6.0
  
 <h2>Project:</h2>
-E:\Embedded Projects\Running\Keil Projects\STM32G030_FRTOS\stm32g030_rtos.uvprojx
-Project File Date:  09/29/2026
+E:\Embedded_Projects\KEIL\STM32G030_RTOS\stm32g030_rtos.uvprojx
+Project File Date:  10/03/2026
 
 <h2>Output:</h2>
-*** Using Compiler 'V6.22', folder: 'C:\Keil\ARM\ARMCLANG\Bin'
+*** Using Compiler 'V6.24', folder: 'C:\Users\Farid\AppData\Local\Keil_v5\ARM\ARMCLANG\Bin'
 Rebuild target 'STM32G030F6P6'
+assembling kernel.s...
+assembling macro_test.s...
+assembling startup_stm32g030xx.s...
+compiling main.c...
+compiling threads.c...
 compiling system_stm32g0xx.c...
 compiling gpio.c...
-compiling threads.c...
-assembling startup_stm32g030xx.s...
-assembling macro_test.s...
-assembling kernel.s...
-main.c(30): error: no member named 'ISR' in 'RTC_TypeDef'
-   30 |                 while ((RTC->ISR & RTC_ISR_WUTWF) == 0U)
-      |                         ~~~  ^
-main.c(30): error: use of undeclared identifier 'RTC_ISR_WUTWF'
-   30 |                 while ((RTC->ISR & RTC_ISR_WUTWF) == 0U)
-      |                                    ^
-main.c(35): error: no member named 'ISR' in 'RTC_TypeDef'
-   35 |                 RTC->ISR &= ~RTC_ISR_WUTF;
-      |                 ~~~  ^
-main.c(35): error: use of undeclared identifier 'RTC_ISR_WUTF'
-   35 |                 RTC->ISR &= ~RTC_ISR_WUTF;
-      |                              ^
-main.c(37): error: use of undeclared identifier 'RTC_WKUP_IRQn'; did you mean 'RTC_TAMP_IRQn'?
-   37 |                 NVIC_ClearPendingIRQ(RTC_WKUP_IRQn);
-      |                                      ^~~~~~~~~~~~~
-      |                                      RTC_TAMP_IRQn
-.\stm32g030xx.h(79): note: 'RTC_TAMP_IRQn' declared here
-   79 |   RTC_TAMP_IRQn               = 2,      /*!< RTC interrupt through the EXTI line 19 & 21                       */
-      |   ^
-main.c(38): error: use of undeclared identifier 'RTC_WKUP_IRQn'; did you mean 'RTC_TAMP_IRQn'?
-   38 |     NVIC_EnableIRQ(RTC_WKUP_IRQn);
-      |                    ^~~~~~~~~~~~~
-      |                    RTC_TAMP_IRQn
-.\stm32g030xx.h(79): note: 'RTC_TAMP_IRQn' declared here
-   79 |   RTC_TAMP_IRQn               = 2,      /*!< RTC interrupt through the EXTI line 19 & 21                       */
-      |   ^
-6 errors generated.
-compiling main.c...
 compiling debug.c...
-".\Objects\stm32g030_rtos.axf" - 6 Error(s), 0 Warning(s).
+linking...
+Program Size: Code=3412 RO-data=224 RW-data=4324 ZI-data=1732  
+".\Objects\stm32g030_rtos.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -82,13 +54,12 @@ Package Vendor: Keil
 
 <h2>Collection of Component include folders:</h2>
   ./RTE/_STM32G030F6P6
-  C:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include
+  C:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include
 
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE@6.2.0
-Target not created.
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>
