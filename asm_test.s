@@ -162,15 +162,15 @@ MACRO_TEST_VAR1       SPACE      8                                 ;64 bit sub-s
 
 
 ;;=========================global function declaration starting==============================;; 
-					  EXPORT     Macro_Test_GPIO_Init
-					  EXPORT     Macro_Test_GPIO_High
-				      EXPORT     Macro_Test_GPIO_Low
+					  EXPORT     ASM_Test_GPIO_Init
+					  EXPORT     ASM_Test_GPIO_High
+				      EXPORT     ASM_Test_GPIO_Low
 ;;===========================global function declaration end=================================;; 
 
 
 
 ;;============================macro test gpio init starting==================================;; 
-Macro_Test_GPIO_Init
+ASM_Test_GPIO_Init
 					  ;enable clock from rcc
                       LDR        R0,   =DEF_RCC_IOPENR             ;load IOPENR address
 					  LDR        R1,   [R0]                        ;load IOPENR val
@@ -200,7 +200,7 @@ Macro_Test_GPIO_Init
 
 
 ;;============================macro test gpio high starting==================================;; 
-Macro_Test_GPIO_High
+ASM_Test_GPIO_High
 					  LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
 					  LDR        R1,   =DEF_DBG_BSRR_BS_VAL        ;load bit set val
 					  STR        R1,   [R0]                        ;store val
@@ -213,7 +213,19 @@ Macro_Test_GPIO_High
 
 
 ;;=============================macro test gpio low starting==================================;; 
-Macro_Test_GPIO_Low
+ASM_Test_GPIO_Low
+					  LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
+					  LDR        R1,   =DEF_DBG_BSRR_BR_VAL        ;load bit clear val
+					  STR        R1,   [R0]                        ;store val
+					  BX         LR                                ;return
+;;===============================macro test gpio low end=====================================;; 
+
+
+
+
+
+;;=============================macro test gpio low starting==================================;; 
+ASM_Test_RTC_Init
 					  LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
 					  LDR        R1,   =DEF_DBG_BSRR_BR_VAL        ;load bit clear val
 					  STR        R1,   [R0]                        ;store val

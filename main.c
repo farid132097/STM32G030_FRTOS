@@ -1,6 +1,7 @@
 
 #include "stm32g030xx.h"
-#include "macro_test.h"
+#include "asm_test.h"
+#include "c_test.h"
 #include "kernel.h"
 #include "threads.h"
 #include "debug.h"
@@ -16,65 +17,21 @@ int main(void)
     Kernel_Thread_Run_All();
     */
     
+	C_Test_Startup_Delay(4000);
+	C_Test_RTC_Init();
 	
-    RCC->APBENR1 |= RCC_APBENR1_PWREN;
-    PWR->CR1  |=  PWR_CR1_DBP;
-	if((RCC->CSR & RCC_CSR_LSIRDY) == 0)
-	{
-		RCC->CSR  |=  RCC_CSR_LSION;
-		while ((RCC->CSR & RCC_CSR_LSIRDY) == 0U)
-		{
-		}
-	}
-    RCC->BDCR &=~ RCC_BDCR_RTCSEL;
-    RCC->BDCR |=  RCC_BDCR_RTCSEL_1;
-    RCC->BDCR |=  RCC_BDCR_RTCEN;
-	if(RTC->CR & RTC_CR_WUTE)
-	{
-		RTC->CR   &=~ RTC_CR_WUTE;
-		while ((RTC->ICSR & RTC_ICSR_WUTWF) == 0U)
-		{
-		}
-	}
-    RTC->CR   &=~ RTC_CR_WUCKSEL_Msk;
-    RTC->SR   &=~ RTC_SR_WUTF;
-    RTC->CR   |=  RTC_CR_WUTIE;
-    NVIC_ClearPendingIRQ(RTC_TAMP_IRQn);
-    NVIC_SetPriority(RTC_TAMP_IRQn, 0);
-    NVIC_EnableIRQ(RTC_TAMP_IRQn);
 	
-    
-    
     while(1)
     {
     
-		if(RTC->CR & RTC_CR_WUTE)
-		{
-			RTC->CR   &=~ RTC_CR_WUTE;
-			while ((RTC->ICSR & RTC_ICSR_WUTWF) == 0U)
-			{
-			}
-		}
-        RTC->SR   &=~ RTC_SR_WUTF;
-        RTC->WUTR = (uint16_t)(500 - 1U);
-        RTC->CR |= RTC_CR_WUTE;
-        SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+		C_Test_Deep_Sleep();
         
-        __DSB();
-        __WFI();
-        __ISB();
         
     }
 }
 
 
 
-void RTC_TAMP_IRQHandler(void)
-{
-    if (RTC->SR & RTC_SR_WUTF)
-    {
-        RTC->SR &=~ RTC_SR_WUTF;
-    }
-}
+
 
 
