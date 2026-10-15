@@ -10,11 +10,11 @@
 __attribute__((noreturn)) 
 void Threads_SysThread(void)
 {
-	Debug_Init(38400);
-	Debug_Tx_Text_NL("DebugStarted");
-    
+	//Debug_Init(38400);
+	//Debug_Tx_Text_NL("DebugStarted");
+	
 	//print all kernel info
-	Kernel_Print_Info(Debug_Tx_Byte);
+	//Kernel_Print_Info(Debug_Tx_Byte);
 	
 	while(1)
 	{

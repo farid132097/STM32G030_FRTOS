@@ -1,48 +1,39 @@
 Dependencies for Project 'stm32g030_rtos', Target 'STM32G030F6P6': (DO NOT MODIFY !)
-CompilerVersion: 6220000::V6.22::ARMCLANG
-F (.\gpio.h)(0x6ABB50FE)()
-F (.\debug.h)(0x6ABB9DF8)()
-F (.\c_test.h)(0x6AC08990)()
-F (.\asm_test.h)(0x6AC0879B)()
-F (.\main.c)(0x6AC089ED)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="541" -DSTM32G030xx -D_RTE_-o ./objects/main.o -MMD)
-I (stm32g030xx.h)(0x6ABB50FE)
-I (C:\Keil\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x69FC5779)
-I (system_stm32g0xx.h)(0x6ABB50FE)
-I (asm_test.h)(0x6AC0879B)
-I (c_test.h)(0x6AC08990)
-I (kernel.h)(0x6ABE3657)
-I (threads.h)(0x6ABB50FE)
-I (debug.h)(0x6ABB9DF8)
-F (.\gpio.c)(0x6AC071A8)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="541" -DSTM32G030xx -D_RTE_-o ./objects/gpio.o -MMD)
-I (stm32g030xx.h)(0x6ABB50FE)
-I (C:\Keil\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x69FC5779)
-I (system_stm32g0xx.h)(0x6ABB50FE)
-I (gpio.h)(0x6ABB50FE)
-F (.\debug.c)(0x6ABB9DEE)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="541" -DSTM32G030xx -D_RTE_-o ./objects/debug.o -MMD)
-I (stm32g030xx.h)(0x6ABB50FE)
-I (C:\Keil\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x69FC5779)
-I (system_stm32g0xx.h)(0x6ABB50FE)
-I (debug.h)(0x6ABB9DF8)
-F (.\c_test.c)(0x6AC08A21)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="541" -DSTM32G030xx -D_RTE_-o ./objects/c_test.o -MMD)
-I (stm32g030xx.h)(0x6ABB50FE)
-I (C:\Keil\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x69FC5779)
-I (system_stm32g0xx.h)(0x6ABB50FE)
-I (c_test.h)(0x6AC08990)
-F (.\asm_test.s)(0x6AC087B4)(--target=arm-arm-none-eabi -mcpu=cortex-m0plus -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-Wa,armasm,--pd,"__UVISION_VERSION SETA 541" -Wa,armasm,--pd,"STM32G030xx SETA 1" -Wa,armasm,--pd,"_RTE_ SETA 1"-o ./objects/asm_test.o)
-F (.\RTE\Device\startup_stm32g030xx.s)(0x6ABB50FE)(--target=arm-arm-none-eabi -mcpu=cortex-m0plus -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-Wa,armasm,--pd,"__UVISION_VERSION SETA 541" -Wa,armasm,--pd,"STM32G030xx SETA 1" -Wa,armasm,--pd,"_RTE_ SETA 1"-o ./objects/startup_stm32g030xx.o)
-F (.\RTE\Device\system_stm32g0xx.c)(0x6ABB50FE)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="541" -DSTM32G030xx -D_RTE_-o ./objects/system_stm32g0xx.o -MMD)
-I (RTE\Device\stm32g0xx.h)(0x6ABB50FE)
-I (RTE\Device\stm32g030xx.h)(0x6ABB50FE)
-I (C:\Keil\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x69FC5779)
-I (RTE\Device\system_stm32g0xx.h)(0x6ABB50FE)
-F (.\kernel.h)(0x6ABE3657)()
-F (.\kernel.s)(0x6AC071A8)(--target=arm-arm-none-eabi -mcpu=cortex-m0plus -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-Wa,armasm,--pd,"__UVISION_VERSION SETA 541" -Wa,armasm,--pd,"STM32G030xx SETA 1" -Wa,armasm,--pd,"_RTE_ SETA 1"-o ./objects/kernel.o)
-F (.\threads.h)(0x6ABB50FE)()
-F (.\threads.c)(0x6AC071A8)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="541" -DSTM32G030xx -D_RTE_-o ./objects/threads.o -MMD)
-I (stm32g030xx.h)(0x6ABB50FE)
-I (C:\Keil\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x69FC5779)
-I (system_stm32g0xx.h)(0x6ABB50FE)
-I (kernel.h)(0x6ABE3657)
-I (threads.h)(0x6ABB50FE)
-I (debug.h)(0x6ABB9DF8)
-I (gpio.h)(0x6ABB50FE)
+CompilerVersion: 6240000::V6.24::ARMCLANG
+F (.\gpio.h)(0x6AD02BE7)()
+F (.\debug.h)(0x6AD037B7)()
+F (.\cdefs.h)(0x6AD031F5)()
+F (.\main.c)(0x6AD0380B)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="543" -DSTM32G030xx -D_RTE_-o ./objects/main.o -MMD)
+I (stm32g030xx.h)(0x6AD02BE7)
+I (C:\Users\Farid\AppData\Local\Arm\Packs\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x6AB6B50D)
+I (system_stm32g0xx.h)(0x6AD02BE7)
+I (kernel.h)(0x6AD02BE7)
+I (threads.h)(0x6AD02F22)
+F (.\gpio.c)(0x6AD02BE7)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="543" -DSTM32G030xx -D_RTE_-o ./objects/gpio.o -MMD)
+I (stm32g030xx.h)(0x6AD02BE7)
+I (C:\Users\Farid\AppData\Local\Arm\Packs\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x6AB6B50D)
+I (system_stm32g0xx.h)(0x6AD02BE7)
+I (gpio.h)(0x6AD02BE7)
+F (.\debug.c)(0x6AD037D7)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="543" -DSTM32G030xx -D_RTE_-o ./objects/debug.o -MMD)
+I (stm32g030xx.h)(0x6AD02BE7)
+I (C:\Users\Farid\AppData\Local\Arm\Packs\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x6AB6B50D)
+I (system_stm32g0xx.h)(0x6AD02BE7)
+I (cdefs.h)(0x6AD031F5)
+I (debug.h)(0x6AD037B7)
+F (.\RTE\Device\startup_stm32g030xx.s)(0x6AD02BE7)(--target=arm-arm-none-eabi -mcpu=cortex-m0plus -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4 -Wa,armasm,--pd,"__EVAL SETA 1"-I./RTE/_STM32G030F6P6-IC:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include-Wa,armasm,--pd,"__UVISION_VERSION SETA 543" -Wa,armasm,--pd,"STM32G030xx SETA 1" -Wa,armasm,--pd,"_RTE_ SETA 1"-o ./objects/startup_stm32g030xx.o)
+F (.\RTE\Device\system_stm32g0xx.c)(0x6AD02BE7)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="543" -DSTM32G030xx -D_RTE_-o ./objects/system_stm32g0xx.o -MMD)
+I (RTE\Device\stm32g0xx.h)(0x6AD02BE7)
+I (RTE\Device\stm32g030xx.h)(0x6AD02BE7)
+I (C:\Users\Farid\AppData\Local\Arm\Packs\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x6AB6B50D)
+I (RTE\Device\system_stm32g0xx.h)(0x6AD02BE7)
+F (.\kernel.h)(0x6AD02BE7)()
+F (.\kernel.s)(0x6AD02C9B)(--target=arm-arm-none-eabi -mcpu=cortex-m0plus -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4 -Wa,armasm,--pd,"__EVAL SETA 1"-I./RTE/_STM32G030F6P6-IC:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include-Wa,armasm,--pd,"__UVISION_VERSION SETA 543" -Wa,armasm,--pd,"STM32G030xx SETA 1" -Wa,armasm,--pd,"_RTE_ SETA 1"-o ./objects/kernel.o)
+F (.\threads.h)(0x6AD02F22)()
+F (.\threads.c)(0x6AD0381C)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -gdwarf-4 -O0 -ffunction-sections -Wall -Wextra -Wno-packed -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-I./RTE/_STM32G030F6P6-IC:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include-D__UVISION_VERSION="543" -DSTM32G030xx -D_RTE_-o ./objects/threads.o -MMD)
+I (stm32g030xx.h)(0x6AD02BE7)
+I (C:\Users\Farid\AppData\Local\Arm\Packs\ARM\CMSIS\6.3.0\CMSIS\Core\Include\core_cm0plus.h)(0x6AB6B50D)
+I (system_stm32g0xx.h)(0x6AD02BE7)
+I (kernel.h)(0x6AD02BE7)
+I (threads.h)(0x6AD02F22)
+I (debug.h)(0x6AD037B7)
+I (gpio.h)(0x6AD02BE7)

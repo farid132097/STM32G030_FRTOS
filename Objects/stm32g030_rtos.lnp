@@ -2,8 +2,6 @@
 ".\objects\main.o"
 ".\objects\gpio.o"
 ".\objects\debug.o"
-".\objects\c_test.o"
-".\objects\asm_test.o"
 ".\objects\startup_stm32g030xx.o"
 ".\objects\system_stm32g0xx.o"
 ".\objects\kernel.o"
