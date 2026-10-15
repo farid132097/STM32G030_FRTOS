@@ -16,10 +16,10 @@ void WDT_Init(uint32_t timeout_ms)
 	}
 	IWDG->KR = 0x0000CCCC;
 	IWDG->KR = 0x00005555;
-	while(IWDG->SR & IWDG_SR_PVU);
+	while(IWDG->SR != 0);
 	//Prescaler 256, Freq 125Hz
 	IWDG->PR = 0x00000007;
-	while(IWDG->SR & IWDG_SR_PVU);
+	while(IWDG->SR != 0);
 	//RLR register is 12 bits
 	IWDG->RLR = timeout_ms;
 	while(IWDG->SR != 0);

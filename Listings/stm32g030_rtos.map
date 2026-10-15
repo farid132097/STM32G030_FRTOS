@@ -391,12 +391,12 @@ Removing Unused input sections from the image.
     Removing threads.o(.ARM.exidx.text.THREAD_Thread2), (8 bytes).
     Removing threads.o(.ARM.exidx.text.THREAD_Thread3), (8 bytes).
     Removing wdt.o(.text), (0 bytes).
-    Removing wdt.o(.text.WDT_Init), (164 bytes).
+    Removing wdt.o(.text.WDT_Init), (160 bytes).
     Removing wdt.o(.ARM.exidx.text.WDT_Init), (8 bytes).
     Removing wdt.o(.text.WDT_Reload), (36 bytes).
     Removing wdt.o(.ARM.exidx.text.WDT_Reload), (8 bytes).
 
-105 unused section(s) (total 2354 bytes) removed from the image.
+105 unused section(s) (total 2350 bytes) removed from the image.
 
 ==============================================================================
 
