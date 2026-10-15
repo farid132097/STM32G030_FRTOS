@@ -8,13 +8,14 @@
 
 
 __attribute__((noreturn)) 
-void Threads_SysThread(void)
+void THREAD_SysSVC(void)
 {
-	//Debug_Init(38400);
-	//Debug_Tx_Text_NL("DebugStarted");
+	Debug_Init(38400);
 	
-	//print all kernel info
-	//Kernel_Print_Info(Debug_Tx_Byte);
+	//add watchdog
+	//add thread heartbeat checker
+	//add thread progress notifier
+	//add system health checker
 	
 	while(1)
 	{
@@ -27,7 +28,7 @@ void Threads_SysThread(void)
 
 
 __attribute__((noreturn)) 
-void Threads_Thread1(void)
+void THREAD_Thread1(void)
 {
 	GPIO_PA1_Init();
 	
@@ -45,7 +46,7 @@ void Threads_Thread1(void)
 
 
 __attribute__((noreturn)) 
-void Threads_Thread2(void)
+void THREAD_Thread2(void)
 {
 	
 	GPIO_PA2_Init();
@@ -64,7 +65,7 @@ void Threads_Thread2(void)
 
 
 __attribute__((noreturn)) 
-void Threads_Thread3(void)
+void THREAD_Thread3(void)
 {
 	
 	GPIO_PA3_Init();

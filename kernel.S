@@ -39,7 +39,6 @@ DEF_KER_STACK_SIZE    EQU        0x00000100                        ;stack size f
 DEF_DBG_GPIO_TICK_EN  EQU        0x00000000                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;pin number, value 00-0fh
-DEF_INFO_BLOCK_SIZE   EQU        0x00000200                        ;info block size 512 bytes
 ;;====================================kernel config end======================================;;
 
 
@@ -166,7 +165,6 @@ THREAD_STS_EXECUTING  EQU        0x04                              ;executing st
                       EXPORT     KER_THREAD_YIELD
                       EXPORT     KER_THREAD_STS
                       EXPORT     KER_THREAD_TOUT
-                      EXPORT     KER_INFO_BLOCK
                       EXPORT     KER_TMP_VAR
 ;;===========================global variable declaration end=================================;; 
 
@@ -201,74 +199,6 @@ KER_TMP_VAR           SPACE      4                                 ;temporary va
 
 
 
-;;===============================kernel info block starting==================================;; 
-KER_INFO_BLOCK
-                      DCB        0x0D, 0x0A, 0x0D, 0x0A
-                      DCB        0x4F, 0x53, 0x20, 0x45, 0x6E, 0x76, 0x69, 0x72
-                      DCB        0x6F, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x46, 0x2D, 0x52, 0x54, 0x4F, 0x53
-                      DCB        0x0D, 0x0A
-                      DCB        0x4F, 0x53, 0x20, 0x50, 0x6C, 0x61, 0x74, 0x66
-                      DCB        0x6F, 0x72, 0x6D, 0x20, 0x20, 0x20, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x41, 0x52, 0x4D, 0x20, 0x43, 0x6F
-                      DCB        0x72, 0x74, 0x65, 0x78, 0x20, 0x4D, 0x30, 0x2B
-                      DCB        0x0D, 0x0A
-                      DCB        0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x43
-                      DCB        0x6F, 0x64, 0x65, 0x20, 0x20, 0x20, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62
-                      DCB        0x2E, 0x63, 0x6F, 0x6D, 0x2F, 0x66, 0x61, 0x72
-                      DCB        0x69, 0x64, 0x31, 0x33, 0x32, 0x30, 0x39, 0x37
-                      DCB        0x0D, 0x0A
-                      DCB        0x41, 0x75, 0x74, 0x68, 0x6F, 0x72, 0x20, 0x45
-                      DCB        0x6D, 0x61, 0x69, 0x6C, 0x20, 0x20, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x66, 0x61, 0x72, 0x69, 0x64, 0x6D
-                      DCB        0x64, 0x69, 0x73, 0x6C, 0x61, 0x6D, 0x40, 0x67
-                      DCB        0x6D, 0x61, 0x69, 0x6C, 0x2E, 0x63, 0x6F, 0x6D
-                      DCB        0x0D, 0x0A
-KER_VERSION_INFO
-                      DCB        0x4B, 0x65, 0x72, 0x6E, 0x65, 0x6C, 0x20, 0x56
-                      DCB        0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x30, 0x2E, 0x30, 0x2E, 0x30, 0x0D
-                      DCB        0x0A      
-KER_MAX_THREAD_INFO
-                      DCB        0x4D, 0x61, 0x78, 0x20, 0x54, 0x68, 0x72, 0x65
-                      DCB        0x61, 0x64, 0x73, 0x20, 0x20, 0x20, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x30, 0x30, 0x0D, 0x0A
-KER_THREADS_CREATED_INFO
-                      DCB        0x54, 0x68, 0x72, 0x65, 0x61, 0x64, 0x73, 0x20
-                      DCB        0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x64, 0x20
-                      DCB        0x3A, 0x20, 0x30, 0x30, 0x0D, 0x0A
-KER_STACK_MODEL_INFO
-                      DCB        0x53, 0x74, 0x61, 0x63, 0x6B, 0x20, 0x4D, 0x6F
-                      DCB        0x64, 0x65, 0x6C, 0x20, 0x20, 0x20, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x55, 0x6E, 0x69, 0x66, 0x69, 0x65
-                      DCB        0x64, 0x0D, 0x0A
-KER_STACK_SIZE_INFO
-                      DCB        0x53, 0x74, 0x61, 0x63, 0x6B, 0x20, 0x53, 0x69
-                      DCB        0x7A, 0x65, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x30, 0x30, 0x30, 0x30, 0x20, 0x42
-                      DCB        0x0D, 0x0A
-KER_GPIO_TICK_DEBUG_INFO
-                      DCB        0x47, 0x50, 0x49, 0x4F, 0x20, 0x54, 0x69, 0x63
-                      DCB        0x6B, 0x20, 0x44, 0x65, 0x62, 0x75, 0x67, 0x20
-                      DCB        0x3A, 0x20, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6C
-                      DCB        0x65, 0x64, 0x0D, 0x0A
-KER_PLL_STATUS_INFO
-                      DCB        0x43, 0x50, 0x55, 0x20, 0x50, 0x4C, 0x4C, 0x20
-                      DCB        0x36, 0x34, 0x4D, 0x48, 0x7A, 0x20, 0x20, 0x20
-                      DCB        0x3A, 0x20, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6C
-                      DCB        0x65, 0x64, 0x0D, 0x0A
-                      DCB        0x0D, 0x0A, 0x0D, 0x0A
-                      DCB        0x00, 0x00
-KER_INFO_DATA_END
-                      SPACE      DEF_INFO_BLOCK_SIZE - (KER_INFO_BLOCK - KER_INFO_DATA_END)
-KER_INFO_BLOCK_END
-;;==================================kernel info block end====================================;;
-
-
-
-
-
 ;;==============================code area definition starting================================;; 
                       AREA       |.ram_code|, CODE, READONLY, ALIGN=4
 ;;=================================code area definition end==================================;; 
@@ -293,151 +223,9 @@ KER_INFO_BLOCK_END
                       EXPORT     Kernel_Version_Major_Get
                       EXPORT     Kernel_Version_Minor_Get
                       EXPORT     Kernel_Version_Patch_Get
-                      EXPORT     Kernel_Info_Char_Get
-                      EXPORT     Kernel_Print_Info
                       EXPORT     SysTick_Handler
                       EXPORT     PendSV_Handler
 ;;===========================global function declaration end=================================;; 
-
-
-
-
-
-;;==========================macro for unsigned divide starting===============================;; 
-                      MACRO                                        ;macro start
-                      MACRO_KER_UDIV32      $ML                    ;macro name
-                      MOV        R3,   R1                          ;R3 = divisor
-                      MOVS       R1,   #0                          ;R1 = remainder
-                      MOVS       R2,   #32                         ;loop counter
-$ML.UDIV32_LOOP
-                      LSLS       R0,   R0, #1                      ;left shift by 1
-                      ADCS       R1,   R1, R1                      ;rem = rem*2+carry
-                      CMP        R1,   R3                          ;compare val
-                      BLO        $ML.UDIV32_NO_SUB                 ;
-                      SUBS       R1,   R1, R3
-                      ADDS       R0,   R0, #1
-$ML.UDIV32_NO_SUB
-                      SUBS       R2,   R2, #1
-                      BNE        $ML.UDIV32_LOOP
-                      MEND                                         ;macro end
-;;============================macro for unsigned divide end==================================;; 
-
-
-
-
-;;========================macro for loading system info starting=============================;; 
-                      MACRO                                        ;macro start
-                      MACRO_KER_INFO_INIT   $ML                    ;macro name
-                      ;update version info
-                      LDR        R0,   =KER_VERSION_INFO           ;load addr
-                      MOVS       R1,   #DEF_KERNEL_VER_MAJOR       ;load addr
-                      ADDS       R1,   R1, #0x30                   ;add 48
-                      STRB       R1,   [R0, #18]                   ;offset store
-                      MOVS       R1,   #DEF_KERNEL_VER_MINOR       ;load addr
-                      ADDS       R1,   R1, #0x30                   ;add 48
-                      STRB       R1,   [R0, #20]                   ;offset store
-                      MOVS       R1,   #DEF_KERNEL_VER_PATCH       ;load addr
-                      ADDS       R1,   R1, #0x30                   ;add 48
-                      STRB       R1,   [R0, #22]                   ;offset store
-                      ;update max number of threads info
-                      LDR        R0,   =DEF_KER_MAX_NTHREAD        ;load max nthread
-                      MOVS       R1,   #10                         ;divider
-                      MACRO_KER_UDIV32 DIV1                        ;divide by 10
-                      MOVS       R3,   #0xFF                       ;copy val
-                      ANDS       R0,   R0, R3                      ;take LSByte
-                      ANDS       R1,   R1, R3                      ;take LSByte
-                      ADDS       R0,   R0, #0x30                   ;add 48
-                      ADDS       R1,   R1, #0x30                   ;add 48
-                      LDR        R2,   =KER_MAX_THREAD_INFO        ;load addr
-                      STRB       R0,   [R2, #18]                   ;offset store
-                      STRB       R1,   [R2, #19]                   ;offset store
-                      ;update threads created info
-                      LDR        R0,   =KER_NTHREAD                ;load nthread addr
-                      LDR        R0,   [R0]                        ;load nthread val
-                      SUBS       R0,   R0, #1                      ;discard idle thread
-                      MOVS       R1,   #10                         ;divider
-                      MACRO_KER_UDIV32 DIV2                        ;divide by 10
-                      MOVS       R3,   #0xFF                       ;copy val
-                      ANDS       R0,   R0, R3                      ;take LSByte
-                      ANDS       R1,   R1, R3                      ;take LSByte
-                      ADDS       R0,   R0, #0x30                   ;add 48
-                      ADDS       R1,   R1, #0x30                   ;add 48
-                      LDR        R2,   =KER_THREADS_CREATED_INFO   ;load addr
-                      STRB       R0,   [R2, #18]                   ;offset store
-                      STRB       R1,   [R2, #19]                   ;offset store
-                      ;update stack size info
-                      LDR        R0,   =DEF_KER_STACK_SIZE         ;load max nthread
-                      LDR        R1,   =1000                       ;divider
-                      MACRO_KER_UDIV32 DIV3                        ;divide by 1000
-                      MOVS       R3,   #0xFF                       ;copy val
-                      ANDS       R0,   R0, R3                      ;take LSByte
-                      ADDS       R0,   R0, #0x30                   ;add 48
-                      LDR        R2,   =KER_STACK_SIZE_INFO        ;load addr
-                      STRB       R0,   [R2, #18]                   ;offset store
-                      MOVS       R0,   R1                          ;copy remainder
-                      MOVS       R1,   #100                        ;load val
-                      MACRO_KER_UDIV32 DIV4                        ;divide by 100
-                      MOVS       R3,   #0xFF                       ;copy val
-                      ANDS       R0,   R0, R3                      ;take LSByte
-                      ADDS       R0,   R0, #0x30                   ;add 48
-                      LDR        R2,   =KER_STACK_SIZE_INFO        ;load addr
-                      STRB       R0,   [R2, #19]                   ;offset store
-                      MOVS       R0,   R1                          ;copy remainder
-                      MOVS       R1,   #10                         ;load val
-                      MACRO_KER_UDIV32 DIV5                        ;divide by 10
-                      MOVS       R3,   #0xFF                       ;copy val
-                      ANDS       R0,   R0, R3                      ;take LSByte
-                      ADDS       R0,   R0, #0x30                   ;add 48
-                      LDR        R2,   =KER_STACK_SIZE_INFO        ;load addr
-                      STRB       R0,   [R2, #20]                   ;offset store
-                      MOVS       R3,   #0xFF                       ;copy val
-                      ANDS       R1,   R1, R3                      ;take LSByte
-                      ADDS       R1,   R1, #0x30                   ;add 48
-                      STRB       R1,   [R2, #21]                   ;offset store
-                      ;update gpio tick debug info
-                      MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load config
-                      BEQ        $ML.TICK_DBG_SKIP                 ;jump to exit
-                      LDR        R0,   =KER_GPIO_TICK_DEBUG_INFO   ;load addr
-                      MOVS       R1,   #0x45                       ;load char
-                      STRB       R1,   [R0, #18]                   ;offset store
-                      MOVS       R1,   #0x6E                       ;load char
-                      STRB       R1,   [R0, #19]                   ;offset store
-                      MOVS       R1,   #0x61                       ;load char
-                      STRB       R1,   [R0, #20]                   ;offset store
-                      MOVS       R1,   #0x62                       ;load char
-                      STRB       R1,   [R0, #21]                   ;offset store
-                      MOVS       R1,   #0x6C                       ;load char
-                      STRB       R1,   [R0, #22]                   ;offset store
-                      MOVS       R1,   #0x65                       ;load char
-                      STRB       R1,   [R0, #23]                   ;offset store
-                      MOVS       R1,   #0x64                       ;load char
-                      STRB       R1,   [R0, #24]                   ;offset store
-                      MOVS       R1,   #0x20                       ;load char
-                      STRB       R1,   [R0, #25]                   ;offset store DEF_64MHZ_PLL_ENABLE
-$ML.TICK_DBG_SKIP
-                      ;update cpu pll info
-                      MOVS       R0,   #DEF_64MHZ_PLL_ENABLE       ;load config
-                      BEQ        $ML.CPU_PLL_STATUS_SKIP           ;jump to exit
-                      LDR        R0,   =KER_PLL_STATUS_INFO        ;load addr
-                      MOVS       R1,   #0x45                       ;load char
-                      STRB       R1,   [R0, #18]                   ;offset store
-                      MOVS       R1,   #0x6E                       ;load char
-                      STRB       R1,   [R0, #19]                   ;offset store
-                      MOVS       R1,   #0x61                       ;load char
-                      STRB       R1,   [R0, #20]                   ;offset store
-                      MOVS       R1,   #0x62                       ;load char
-                      STRB       R1,   [R0, #21]                   ;offset store
-                      MOVS       R1,   #0x6C                       ;load char
-                      STRB       R1,   [R0, #22]                   ;offset store
-                      MOVS       R1,   #0x65                       ;load char
-                      STRB       R1,   [R0, #23]                   ;offset store
-                      MOVS       R1,   #0x64                       ;load char
-                      STRB       R1,   [R0, #24]                   ;offset store
-                      MOVS       R1,   #0x20                       ;load char
-                      STRB       R1,   [R0, #25]                   ;offset store 
-$ML.CPU_PLL_STATUS_SKIP
-                      MEND                                         ;macro end
-;;===========================macro for loading system info end===============================;;
 
 
 
@@ -1135,7 +923,6 @@ Kernel_Thread_Create
 Kernel_Thread_Run_All
                       ;configure SysTick timer
                       MACRO_SYSTICK_CONFIG                         ;configure systick
-                      MACRO_KER_INFO_INIT    DBG_INFO              ;init kernel info
                       ;calculate stack top for this thread
                       LDR        R0,   =DEF_KER_STACK_SIZE         ;load each stack size
                       LDR        R1,   =KER_THREAD_STACK           ;PSP start base
@@ -1181,11 +968,9 @@ PendSV_Handler
                       MACRO_GPIO_SET          ISRLBL1              ;debug pin set
                       MACRO_CONTEXT_SAVE                           ;save context
                       MACRO_KER_RUN_SCHEDULER ISRLBL2, ISRLBL3     ;run scheduler, local label
-                      
                       MACRO_SS_CNT            ISRLBL4              ;sub-seconds counter
                       MACRO_S_CNT             ISRLBL5              ;seconds counter
                       MACRO_CPU_USAGE         ISRLBL6              ;calculate cpu usage
-                      
                       MACRO_CLEAR_YIELD_FLAG  ISRLBL7              ;clear yield flag
                       MACRO_CONTEXT_RESTORE                        ;restore context
                       MACRO_GPIO_CLEAR        ISRLBL8              ;debug pin clear
@@ -1378,37 +1163,6 @@ Kernel_Version_Patch_Get
                       MOVS       R0,   #DEF_KERNEL_VER_PATCH       ;load kernel ver patch val
                       BX         LR                                ;return
 ;;==============================kernel version patch get end=================================;; 
-
-
-
-
-
-;;============================kernel version patch get starting==============================;; 
-Kernel_Info_Char_Get
-                      LDR        R1,   =KER_INFO_BLOCK             ;load pointer addr
-                      LDRB       R0,   [R1, R0]                    ;load byte with offset
-                      BX         LR                                ;return
-;;==============================kernel version patch get end=================================;; 
-
-
-
-
-;;===============================kernel print info starting==================================;; 
-Kernel_Print_Info
-                      PUSH       {R4, R5,  LR}                     ;save return addr
-                      MOVS       R4,   R0                          ;copy function pointer
-                      MOVS       R5,   #0                          ;set loop cnt 0
-KER_PRINT_CHAR        
-                      MOVS       R0,   R5                          ;copy
-                      BL         Kernel_Info_Char_Get              ;get char
-                      TST        R0,   R0                          ;check if 0
-                      BEQ        KER_PRINT_EXIT                    ;exit from func
-                      BLX        R4                                ;jmp to func ptr
-                      ADDS       R5,   R5, #1                      ;increment
-                      BL         KER_PRINT_CHAR                    ;jmp to label
-KER_PRINT_EXIT
-                      POP        {R4, R5, PC}                      ;return
-;;=================================kernel print info end=====================================;;  
 
 
 

@@ -17,7 +17,7 @@
 
 #include "stm32g030xx.h"
 
-//#define  DEBUG_ENABLE
+#define  DEBUG_ENABLE
 #define  DEBUG_TX_PA2
 //#define  DEBUG_TX_PB6
 
