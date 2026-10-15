@@ -20,7 +20,8 @@ void THREAD_SysSVC(void)
 	while(1)
 	{
 		
-		Kernel_Thread_Sleep(60000);
+		Debug_Tx_Text_NL("SysSVC in operation");
+		Kernel_Thread_Sleep(5000);
 		
 	}
 }
@@ -49,14 +50,14 @@ __attribute__((noreturn))
 void THREAD_Thread2(void)
 {
 	
-	GPIO_PA2_Init();
+	//GPIO_PA2_Init();
 	
 	while(1)
 	{
 		
-		GPIO_PA2_Set();
+		//GPIO_PA2_Set();
 		Kernel_Thread_Sleep(1000);
-		GPIO_PA2_Clear();
+		//GPIO_PA2_Clear();
 		Kernel_Thread_Sleep(1000);
 		
 	}
@@ -68,13 +69,13 @@ __attribute__((noreturn))
 void THREAD_Thread3(void)
 {
 	
-	GPIO_PA3_Init();
+	//GPIO_PA3_Init();
 	
 	while(1)
 	{
-		GPIO_PA3_Set();
+		//GPIO_PA3_Set();
 		Kernel_Thread_Sleep(2000);
-		GPIO_PA3_Clear();
+		//GPIO_PA3_Clear();
 		Kernel_Thread_Sleep(2000);
 		
 	}
