@@ -36,9 +36,9 @@ DEF_KERNEL_VER_PATCH  EQU        0x00000001                        ;set kernel v
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
 DEF_KER_MAX_NTHREAD   EQU        0x0000000A                        ;number of maximum threads
 DEF_KER_STACK_SIZE    EQU        0x00000100                        ;stack size for each thread
-DEF_DBG_GPIO_TICK_EN  EQU        0x00000000                        ;enable/disable gpio toggle
+DEF_DBG_GPIO_TICK_EN  EQU        0x00000001                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
-DEF_DBG_GPIO_PIN      EQU        0x00000000                        ;pin number, value 00-0fh
+DEF_DBG_GPIO_PIN      EQU        0x00000003                        ;pin number, value 00-0fh
 ;;====================================kernel config end======================================;;
 
 
@@ -118,7 +118,7 @@ DEF_DBG_BSRR_BR_VAL   EQU        ( 1 << DEF_DBG_BSRR_BR_OFF )      ;calculate BR
 
 
 ;;==========================define stack size related value starting=========================;; 
-DEF_KER_SYS_THREADS   EQU        DEF_KER_MAX_NTHREAD + 1
+DEF_KER_SYS_THREADS   EQU        DEF_KER_MAX_NTHREAD + 1                    ;add 1 for idle 
 DEF_KER_STACK_SPACE   EQU        DEF_KER_SYS_THREADS * DEF_KER_STACK_SIZE   ;max stack size
 ;;============================define stack size related value end============================;; 
 
@@ -147,16 +147,11 @@ THREAD_STS_EXECUTING  EQU        0x04                              ;executing st
 
 
 ;;=========================global variable declaration starting==============================;; 
-                      EXPORT     KER_TICK_SS
-                      EXPORT     KER_TICK_S
-                      EXPORT     KER_TICK_S_CNT
-                      EXPORT     KER_TOTAL_TICK_CNT
-                      EXPORT     KER_ACTV_TICK_CNT
+                      EXPORT     KER_TICK_TIMERS
                       EXPORT     KER_CPU_USAGE
-                      EXPORT     KER_CPU_USAGE_AVG
                       EXPORT     KER_THREAD_STACK
                       EXPORT     KER_THREAD_ID
-                      EXPORT     KER_NTHREAD
+                      EXPORT     KER_THREAD_CNT
                       EXPORT     KER_THREAD_PSP
                       EXPORT     KER_THREAD_PRIO
                       EXPORT     KER_THREAD_HI_PRIO
@@ -174,17 +169,12 @@ THREAD_STS_EXECUTING  EQU        0x04                              ;executing st
 
 ;;===========================global variable definition starting=============================;; 
 KER_SYSTICK_RLD       SPACE      4                                 ;systick reload val
-KER_TICK_SS           SPACE      8                                 ;64 bit sub-seconds counter
-KER_TICK_S            SPACE      4                                 ;32 bit seconds counter
-KER_TICK_S_CNT        SPACE      4                                 ;tick counter for Seconds
-KER_TOTAL_TICK_CNT    SPACE      4                                 ;reference tick counter
-KER_ACTV_TICK_CNT     SPACE      4                                 ;active thread entry counter
-KER_CPU_USAGE         SPACE      4                                 ;instantenious cpu usage
-KER_CPU_USAGE_AVG     SPACE      4                                 ;average cpu usage
-KER_NTHREAD           SPACE      4                                 ;total created threads
+KER_TICK_TIMERS       SPACE      16                                ;8B ss, 4B ss, 4B s
+KER_CPU_USAGE         SPACE      16                                ;4B tick,4B act, 4B usage 
+KER_THREAD_CNT        SPACE      4                                 ;total created threads
 KER_THREAD_STACK      SPACE      DEF_KER_STACK_SPACE + 0x08        ;total stack space
 KER_THREAD_ID         SPACE      4                                 ;current thread id
-KER_THREAD_PSP        SPACE      4 * DEF_KER_SYS_THREADS           ;PSP for 10 threads
+KER_THREAD_PSP        SPACE      4 * DEF_KER_SYS_THREADS           ;PSP for threads
 KER_THREAD_PRIO       SPACE      4 * DEF_KER_SYS_THREADS           ;thread priority
 KER_THREAD_HI_PRIO    SPACE      4                                 ;highest priority
 KER_THREAD_PRIO_TID   SPACE      4                                 ;highest priority thread_id
@@ -234,24 +224,19 @@ KER_TMP_VAR           SPACE      4                                 ;temporary va
 ;;=======================macro for system variable init starting=============================;; 
                       MACRO                                        ;macro start
                       MACRO_SYS_VAR_INIT                           ;macro name
-                      LDR        R0,   =KER_TICK_SS                ;load tick_ss addr
+                      LDR        R0,   =KER_TICK_TIMERS            ;load tick_timer addr
                       MOVS       R1,   #0x00                       ;set val 0
-                      STR        R1,   [R0]                        ;store tick_ssL val
-                      STR        R1,   [R0,  #4]                   ;store tick_ssH val
-                      LDR        R0,   =KER_TICK_S                 ;load tick_s addr
-                      STR        R1,   [R0]                        ;store tick_s val
-                      LDR        R0,   =KER_TICK_S_CNT             ;load tick_s_cnt addr
-                      STR        R1,   [R0]                        ;store all_tick_cnt val
-                      LDR        R0,   =KER_TOTAL_TICK_CNT         ;load all_tick_cnt addr
-                      STR        R1,   [R0]                        ;store all_tick_cnt val
-                      LDR        R0,   =KER_ACTV_TICK_CNT          ;load active_tick_cnt addr
-                      STR        R1,   [R0]                        ;store idle_tick_cnt val
+                      STR        R1,   [R0, #0]                    ;store tick_ss_low val
+					  STR        R1,   [R0, #4]                    ;store tick_ss_high val
+					  STR        R1,   [R0, #8]                    ;store tick_ss_s val
+					  STR        R1,   [R0, #12]                   ;store tick_s val
                       LDR        R0,   =KER_CPU_USAGE              ;load cpu_usage addr
-                      STR        R1,   [R0]                        ;store cpu_usage val
-                      LDR        R0,   =KER_CPU_USAGE_AVG          ;load cpu_usage_avg addr
-                      STR        R1,   [R0]                        ;store cpu_usage_avg val
-                      LDR        R0,   =KER_NTHREAD                ;load nthread addr
-                      STR        R1,   [R0]                        ;store nthread val
+                      STR        R1,   [R0, #0]                    ;store total tick val
+					  STR        R1,   [R0, #4]                    ;store active tick val
+					  STR        R1,   [R0, #8]                    ;store cpu usage val
+					  STR        R1,   [R0, #12]                   ;store avg cpu usage val
+                      LDR        R0,   =KER_THREAD_CNT             ;load thread cnt addr
+                      STR        R1,   [R0]                        ;store thread cnt val
                       LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
                       STR        R1,   [R0]                        ;store thread_id val
                       LDR        R0,   =KER_THREAD_YIELD           ;load nthread addr
@@ -656,8 +641,8 @@ $ML2.BL_OR_LP                                                      ;label->block
                       LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
                       LDR        R1,   [R0]                        ;load thread_id val
                       ADDS       R1,   R1, #1                      ;increment
-                      LDR        R2,   =KER_NTHREAD                ;load nthread addr
-                      LDR        R2,   [R2]                        ;load nthread val
+                      LDR        R2,   =KER_THREAD_CNT             ;load thread cnt addr
+                      LDR        R2,   [R2]                        ;load thread cnt val
                       CMP        R1,   R2                          ;compare
                       BHS        $ML2.LP_END                       ;thread_id>=nthread
                       STR        R1,   [R0]                        ;store new thread_id
@@ -675,52 +660,36 @@ $ML2.EXIT
 
 
 
-;;==========================macro for sub-seconds counter starting===========================;; 
+;;=====================macro for sub-seconds & seconds counter starting======================;; 
                       MACRO                                        ;macro start
-                      MACRO_SS_CNT     $ML                         ;macro name
+                      MACRO_SS_S_CNT   $ML                         ;macro name
                       LDR        R0,   =KER_THREAD_YIELD           ;load yield flag addr
                       LDR        R1,   [R0]                        ;load yield flag val
                       TST        R1,   R1                          ;test val
+					  LDR        R0,   =KER_TICK_TIMERS            ;
                       BNE        $ML.EXIT                          ;jmp to label
-                      LDR        R0,   =KER_TICK_SS                ;load tick_ss base addr
-                      LDR        R1,   [R0]                        ;load systick ss LSW val
+                      LDR        R1,   [R0, #0]                    ;load ss64 low word val
                       ADDS       R1,   R1,  #1                     ;increment val
                       STR        R1,   [R0]                        ;store val
-                      BNE        $ML.EXIT                          ;jmp to label
-                      LDR        R1,   [R0, #4]                    ;load systick ss HSW val
+                      BNE        $ML.S_CNT_START                   ;jmp to label
+                      LDR        R1,   [R0, #4]                    ;load ss64 high word val
                       ADDS       R1,   R1,  #1                     ;increment val
                       STR        R1,   [R0, #4]                    ;store val
-$ML.EXIT
-                      MEND                                         ;macro end
-;;============================macro for sub-seconds counter end==============================;; 
-
-
-
-
-
-;;============================macro for seconds counter starting=============================;; 
-                      MACRO                                        ;macro start
-                      MACRO_S_CNT      $ML                         ;macro name
-                      LDR        R0,   =KER_THREAD_YIELD           ;load yield flag addr
-                      LDR        R1,   [R0]                        ;load yield flag val
-                      TST        R1,   R1                          ;test val
-                      BNE        $ML.EXIT                          ;jmp to label
-                      LDR        R0,   =KER_TICK_S_CNT             ;load tick_s_cnt addr
-                      LDR        R1,   [R0]                        ;load systick ss LSW val
+$ML.S_CNT_START 
+                      LDR        R1,   [R0, #8]                    ;load ss32 val
                       ADDS       R1,   R1,  #1                     ;increment val
                       LDR        R2,   =1000                       ;compare with 1000ms
                       CMP        R1,   R2                          ;compare with val
                       BLO        $ML.SAVE_TICK                     ;no need to inc sec
-                      LDR        R1,   =0x00000000                 ;clear counter
-                      LDR        R2,   =KER_TICK_S                 ;load tick_s addr
-                      LDR        R3,   [R2]                        ;load tick_s val
-                      ADDS       R3,   R3,  #1                     ;increment val
-                      STR        R3,   [R2]                        ;store tick_s val
+                      MOVS       R1,   #0x00                       ;clear counter
+                      LDR        R2,   [R0, #12]                   ;load s32 val
+                      ADDS       R2,   R2,  #1                     ;increment val
+                      STR        R2,   [R0, #12]                   ;store val
 $ML.SAVE_TICK
-                      STR        R1,   [R0]                        ;store tick_s_cnt val
+                      STR        R1,   [R0, #8]                    ;store ss32 val
 $ML.EXIT
                       MEND                                         ;macro end
-;;==============================macro for seconds counter end================================;; 
+;;=======================macro for sub-seconds & seconds counter end=========================;; 
 
 
 
@@ -732,37 +701,31 @@ $ML.EXIT
                       LDR        R0,   =KER_THREAD_YIELD           ;load yield flag addr
                       LDR        R1,   [R0]                        ;load yield flag val
                       TST        R1,   R1                          ;test val
+					  LDR        R0,   =KER_CPU_USAGE              ;load cpu_usage addr
                       BNE        $ML.EXIT                          ;jmp to label
-                      LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
-                      LDR        R1,   [R0]                        ;load thread_id
-                      LDR        R2,   =KER_ACTV_TICK_CNT          ;load active_tick_cnt addr
-                      LDR        R0,   [R2]                        ;load active_tick_cnt
-                      TST        R1,   R1                          ;check val
-                      BEQ        $ML.SKIP_INC                      ;if thread = idle thread, skip
-                      ADDS       R0,   R0,  #1                     ;increment val
-                      STR        R0,   [R2]                        ;store val, R0 active_tick_cnt
+					  LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
+					  LDR        R1,   [R1]                        ;load thread_id
+					  TST        R1,   R1                          ;check val
+					  LDR        R1,   [R0, #4]                    ;load active_tick_cnt
+					  BEQ        $ML.SKIP_INC                      ;if thread is idle, skip
+					  ADDS       R1,   R1,  #1                     ;increment val
+					  STR        R1,   [R0, #4]                    ;store val
 $ML.SKIP_INC                                                       ;label->no increment
-                      LDR        R1,   =KER_TOTAL_TICK_CNT         ;load cmp_tick_cnt addr
-                      LDR        R2,   [R1]                        ;load cmp_tick_cnt val
-                      ADDS       R2,   R2,  #1                     ;increment val
-                      LDR        R3,   =1000                       ;load compare val
-                      CMP        R2,   R3                          ;compare values
-                      BLO        $ML.SKIP_WRAP                     ;jmp to label
-                      LDR        R3,   =KER_CPU_USAGE              ;load cpu_usage addr
-                      STR        R0,   [R3]                        ;store
-                      LDR        R3,   =KER_CPU_USAGE_AVG          ;IIR LPF, Alpha=0.5
-                      LDR        R3,   [R3]                        ;load val
-                      LSRS       R0,   R0, #1                      ;divide by 2
+					  LDR        R2,   [R0, #0]                    ;load total tick count
+					  ADDS       R2,   R2,  #1                     ;increment val
+					  LDR        R3,   =1000                       ;load compare val
+					  CMP        R2,   R3                          ;compare values
+					  BLO        $ML.SKIP_WRAP                     ;jmp to label
+					  MOVS       R2,   #0x00                       ;clear reg
+					  STR        R2,   [R0, #4]                    ;store active tick cnt
+					  STR        R1,   [R0, #8]                    ;store cpu_usage
+					  LDR        R3,   [R0, #12]                   ;load cpu_usage_avg val
+					  LSRS       R1,   R1, #1                      ;divide by 2
                       LSRS       R3,   R3, #1                      ;divide by 2
-                      ADDS       R0,   R0, R3                      ;prev/2 + curr/2
-                      LDR        R3,   =KER_CPU_USAGE_AVG          ;load addr
-                      STR        R0,   [R3]                        ;store avarge val
-                      MOVS       R2,   #0x00                       ;set val to 0
-                      LDR        R0,   =KER_ACTV_TICK_CNT          ;load cmp_tick_cnt addr
-                      STR        R2,   [R0]                        ;store
-                      
+					  ADDS       R1,   R1, R3                      ;prev/2 + curr/2
+					  STR        R1,   [R0, #12]                   ;store cpu_usage_avg val
 $ML.SKIP_WRAP                                                      ;label->no wrapping
-                      STR        R2,   [R1]                        ;store new val
+                      STR        R2,   [R0, #0]                    ;store total tick cnt
 $ML.EXIT                                                           ;label->exit
                       MEND                                         ;macro end
 ;;===========================macro for cpu usage calculation end=============================;; 
@@ -838,8 +801,8 @@ Kernel_Init
 Kernel_Thread_Create
                       ;calculate stack top for this thread (R0:R1 are used by arguments)
                       LDR        R2,   =DEF_KER_STACK_SIZE         ;load each stack size
-                      LDR        R3,   =KER_NTHREAD                ;load nthread addr
-                      LDR        R3,   [R3]                        ;load nthread val
+                      LDR        R3,   =KER_THREAD_CNT             ;load thread cnt addr
+                      LDR        R3,   [R3]                        ;load thread cnt val
                       ADDS       R3,   R3, #1                      ;thread_id+1
                       MULS       R2,   R3, R2                      ;(thread_id+1)*size
                       LDR        R3,   =KER_THREAD_STACK           ;PSP start base
@@ -873,8 +836,8 @@ Kernel_Thread_Create
                       STR        R3,   [R2, #60]                   ;xPSR (Thumb)
                       
                       ;calculate offset(R1 arg, R2 stack top)
-                      LDR        R0,   =KER_NTHREAD                ;load nthread addr
-                      LDR        R0,   [R0]                        ;load nthread val
+                      LDR        R0,   =KER_THREAD_CNT             ;load thread cnt addr
+                      LDR        R0,   [R0]                        ;load thread cnt val
                       LSLS       R0,   R0, #2                      ;left shift to x4
                       
                       ;store PSP (R0 offset, R1 arg, R2 stack top)
@@ -900,8 +863,8 @@ Kernel_Thread_Create
                       STR        R2,   [R1]                        ;save priority
                       
                       ;increment nthread (R0 offset)
-                      LDR        R0,   =KER_NTHREAD                ;load nthread addr
-                      LDR        R1,   [R0]                        ;load nthread val
+                      LDR        R0,   =KER_THREAD_CNT             ;load thread cnt addr
+                      LDR        R1,   [R0]                        ;load thread cnt val
                       ADDS       R1,   R1, #1                      ;nthread+1
                       STR        R1,   [R0]                        ;save PSP
                       
@@ -968,12 +931,11 @@ PendSV_Handler
                       MACRO_GPIO_SET          ISRLBL1              ;debug pin set
                       MACRO_CONTEXT_SAVE                           ;save context
                       MACRO_KER_RUN_SCHEDULER ISRLBL2, ISRLBL3     ;run scheduler, local label
-                      MACRO_SS_CNT            ISRLBL4              ;sub-seconds counter
-                      MACRO_S_CNT             ISRLBL5              ;seconds counter
-                      MACRO_CPU_USAGE         ISRLBL6              ;calculate cpu usage
-                      MACRO_CLEAR_YIELD_FLAG  ISRLBL7              ;clear yield flag
+                      MACRO_SS_S_CNT          ISRLBL4              ;ss and seconds counter
+                      MACRO_CPU_USAGE         ISRLBL5              ;calculate cpu usage
+                      MACRO_CLEAR_YIELD_FLAG  ISRLBL6              ;clear yield flag
                       MACRO_CONTEXT_RESTORE                        ;restore context
-                      MACRO_GPIO_CLEAR        ISRLBL8              ;debug pin clear
+                      MACRO_GPIO_CLEAR        ISRLBL7              ;debug pin clear
                       CPSIE      I                                 ;enable interrupt
                       BX         LR                                ;return from interrupt
 ;;================================pending service isr end====================================;; 
@@ -1029,8 +991,8 @@ Kernel_Thread_Sleep
 
 ;;==========================kernel tick 32bit SS val get starting============================;; 
 Kernel_Tick_SS32_Get
-                      LDR        R0,   =KER_TICK_SS                ;load sub-seconds addr
-                      LDR        R0,   [R0]                        ;load sub-seconds val
+                      LDR        R0,   =KER_TICK_TIMERS            ;load tick timers addr
+                      LDR        R0,   [R0, #0]                    ;load sub-seconds32 val
                       BX         LR                                ;return
 ;;============================kernel tick 32bit SS val get end===============================;; 
 
@@ -1040,9 +1002,9 @@ Kernel_Tick_SS32_Get
 ;;==========================kernel tick 64bit SS val get starting============================;;   
 Kernel_Tick_SS64_Get
                       CPSID      I                                 ;disable interrupts
-                      LDR        R0,   =KER_TICK_SS                ;load sub-seconds addr
-                      LDR        R1,   [R0, #4]                    ;load HW sub-seconds val
-                      LDR        R0,   [R0]                        ;load LW sub-seconds val
+                      LDR        R0,   =KER_TICK_TIMERS            ;load tick timers addr
+                      LDR        R1,   [R0, #4]                    ;load sub-seconds64 HW val
+                      LDR        R0,   [R0, #0]                    ;load sub-seconds64 LW val
                       CPSIE      I                                 ;enable interrupt
                       BX         LR                                ;return
 ;;============================kernel tick 64bit SS val get end===============================;; 
@@ -1052,8 +1014,8 @@ Kernel_Tick_SS64_Get
 
 ;;==========================kernel tick seconds val get starting=============================;; 
 Kernel_Tick_S_Get
-                      LDR        R0,   =KER_TICK_S                 ;load seconds addr
-                      LDR        R0,   [R0]                        ;load seconds val
+                      LDR        R0,   =KER_TICK_TIMERS            ;load tick timers addr
+                      LDR        R0,   [R0, #12]                   ;load seconds val
                       BX         LR                                ;return
 ;;============================kernel tick seconds val get end================================;; 
 
@@ -1120,7 +1082,7 @@ KER_IS_TOUT_EXIT
 ;;==============================kernel cpu usage get starting================================;; 
 Kernel_CPU_Usage_x10_Get
                       LDR        R0,   =KER_CPU_USAGE              ;load cpu_usage addr
-                      LDR        R0,   [R0]                        ;load cpu_usage val
+                      LDR        R0,   [R0, #8]                    ;load cpu_usage val
                       BX         LR                                ;return
 ;;=================================kernel cpu usage get end==================================;; 
 
@@ -1129,8 +1091,8 @@ Kernel_CPU_Usage_x10_Get
 
 ;;==========================kernel cpu usage average get starting============================;; 
 Kernel_CPU_Usage_Avg_x10_Get
-                      LDR        R0,   =KER_CPU_USAGE_AVG          ;load cpu_usage_avg addr
-                      LDR        R0,   [R0]                        ;load cpu_usage_avg val
+                      LDR        R0,   =KER_CPU_USAGE              ;load cpu_usage addr
+                      LDR        R0,   [R0, #12]                   ;load cpu_usage_avg val
                       BX         LR                                ;return
 ;;============================kernel cpu usage average get end===============================;; 
 

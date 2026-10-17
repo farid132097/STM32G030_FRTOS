@@ -20,7 +20,10 @@ void THREAD_SysSVC(void)
 	while(1)
 	{
 		
-		Debug_Tx_Text_NL("SysSVC in operation");
+		Debug_Tx_Parameter_NL("SS64 ", Kernel_Tick_SS64_Get());
+		Debug_Tx_Parameter_NL("S32  ", Kernel_Tick_S_Get());
+		Debug_Tx_Parameter_NL("CPUUC", Kernel_CPU_Usage_x10_Get());
+		Debug_Tx_Parameter_NL("CPUUA", Kernel_CPU_Usage_Avg_x10_Get());
 		Kernel_Thread_Sleep(5000);
 		
 	}
