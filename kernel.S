@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Oct 01, 2026, 04:28 PM
+ ; Last Modified : Oct 17, 2026, 04:28 PM
 
 
 
@@ -36,6 +36,8 @@ DEF_KERNEL_VER_PATCH  EQU        0x00000001                        ;set kernel v
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
 DEF_KER_MAX_NTHREAD   EQU        0x0000000A                        ;number of maximum threads
 DEF_KER_STACK_SIZE    EQU        0x00000100                        ;stack size for each thread
+DEF_KER_TCB_SIZE      EQU        0x00000020                        ;task control block size
+DEF_KER_TCB_LSHIFT    EQU        0x00000005                        ;task control block size
 DEF_DBG_GPIO_TICK_EN  EQU        0x00000001                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN      EQU        0x00000003                        ;pin number, value 00-0fh
@@ -168,21 +170,18 @@ THREAD_STS_EXECUTING  EQU        0x04                              ;executing st
 
 
 ;;===========================global variable definition starting=============================;; 
-KER_SYSTICK_RLD       SPACE      4                                 ;systick reload val
-KER_TICK_TIMERS       SPACE      16                                ;8B ss, 4B ss, 4B s
-KER_CPU_USAGE         SPACE      16                                ;4B tick,4B act, 4B usage 
-KER_THREAD_CNT        SPACE      4                                 ;total created threads
-KER_THREAD_STACK      SPACE      DEF_KER_STACK_SPACE + 0x08        ;total stack space
-KER_THREAD_ID         SPACE      4                                 ;current thread id
-KER_THREAD_PSP        SPACE      4 * DEF_KER_SYS_THREADS           ;PSP for threads
-KER_THREAD_PRIO       SPACE      4 * DEF_KER_SYS_THREADS           ;thread priority
-KER_THREAD_HI_PRIO    SPACE      4                                 ;highest priority
-KER_THREAD_PRIO_TID   SPACE      4                                 ;highest priority thread_id
-KER_THREAD_SLEEP      SPACE      4 * DEF_KER_SYS_THREADS           ;thread sleep duration
-KER_THREAD_YIELD      SPACE      4                                 ;thread yield status
-KER_THREAD_STS        SPACE      4 * DEF_KER_SYS_THREADS           ;thread status
-KER_THREAD_TOUT       SPACE      8 * DEF_KER_SYS_THREADS           ;2 byte timeout timestamps
-KER_TMP_VAR           SPACE      4                                 ;temporary variables
+KER_SYSTICK_RLD       SPACE      4                                      ;systick reload val
+KER_TICK_TIMERS       SPACE      16                                     ;8B ss, 4B ss, 4B s
+KER_CPU_USAGE         SPACE      16                                     ;4B tick,4B act, 4B usage 
+KER_THREAD_CNT        SPACE      4                                      ;total created threads
+KER_THREAD_ID         SPACE      4                                      ;current thread id
+KER_THREAD_HI_PRIO    SPACE      4                                      ;highest priority
+KER_THREAD_PRIO_TID   SPACE      4                                      ;highest priority tid
+KER_THREAD_YIELD      SPACE      4                                      ;thread yield status
+KER_TMP_VAR           SPACE      4                                      ;temporary variables
+KER_THREAD_STACK      SPACE      DEF_KER_STACK_SPACE + 0x08             ;total stack space
+;PSP(4B), Prio(4B), STS(4B), SLEEP(4B), TOUT(8B), 24B total
+KER_THREAD_CB         SPACE      DEF_KER_TCB_SIZE * DEF_KER_SYS_THREADS ;thread control block
 ;;=============================global variable definition end================================;; 
 
 
@@ -520,8 +519,10 @@ $ML.EXIT
 ;;==============================macro for loading psp starting===============================;; 
                       MACRO                                        ;macro start
                       MACRO_LOAD_PSP                               ;macro name
-                      MACRO_OFFSET_CALC                            ;calculate offset, ret R0
-                      LDR        R1,   =KER_THREAD_PSP             ;load thread psp addr base
+					  LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
+                      LDR        R0,   [R0]                        ;load thread_id val
+                      LSLS       R0,   R0,  #DEF_KER_TCB_LSHIFT    ;left shift to multiply
+                      LDR        R1,   =KER_THREAD_CB              ;load thread control block
                       ADD        R0,   R0,  R1                     ;calc offset from psp base
                       LDR        R0,   [R0]                        ;load thread PSP
                       MEND                                         ;macro end

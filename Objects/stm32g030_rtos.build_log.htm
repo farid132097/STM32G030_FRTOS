@@ -30,17 +30,78 @@ Project File Date:  10/15/2026
 <h2>Output:</h2>
 *** Using Compiler 'V6.22', folder: 'C:\Keil\ARM\ARMCLANG\Bin'
 Rebuild target 'STM32G030F6P6'
-assembling startup_stm32g030xx.s...
 compiling main.c...
-compiling wdt.c...
-assembling kernel.s...
-compiling system_stm32g0xx.c...
 compiling threads.c...
+compiling system_stm32g0xx.c...
 compiling gpio.c...
+"kernel.s", line 157: Error: A1145E: Undefined exported symbol 'KER_THREAD_PSP'
+  157 00000000                       EXPORT     KER_THREAD_PSP
+"kernel.s", line 158: Error: A1145E: Undefined exported symbol 'KER_THREAD_PRIO'
+  158 00000000                       EXPORT     KER_THREAD_PRIO
+"kernel.s", line 161: Error: A1145E: Undefined exported symbol 'KER_THREAD_SLEEP'
+  161 00000000                       EXPORT     KER_THREAD_SLEEP
+"kernel.s", line 163: Error: A1145E: Undefined exported symbol 'KER_THREAD_STS'
+  163 00000000                       EXPORT     KER_THREAD_STS
+"kernel.s", line 164: Error: A1145E: Undefined exported symbol 'KER_THREAD_TOUT'
+  164 00000000                       EXPORT     KER_THREAD_TOUT
+"kernel.s", line 845 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_PSP', not defined or external
+  845 000001b2                       LDR        R3,   =KER_THREAD_PSP             ;PSP base
+                                                       ^
+"kernel.s", line 850 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_PRIO', not defined or external
+  850 000001b8                       LDR        R2,   =KER_THREAD_PRIO            ;priority base
+                                                       ^
+"kernel.s", line 855 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_SLEEP', not defined or external
+  855 000001be                       LDR        R1,   =KER_THREAD_SLEEP           ;sleep base
+                                                       ^
+"kernel.s", line 861 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_STS', not defined or external
+  861 000001c6                       LDR        R1,   =KER_THREAD_STS             ;priority base
+                                                       ^
+"kernel.s", line 933 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_PSP', not defined or external
+    at line 508 in macro MACRO_SAVE_PSP in 'kernel.s'
+    at line 539 in macro MACRO_CONTEXT_SAVE in 'kernel.s'
+  508 00000280                       LDR        R1,   =KER_THREAD_PSP             ;load thread psp addr base
+                                                       ^
+"kernel.s", line 934 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_SLEEP', not defined or external
+    at line 563 in macro MACRO_KER_SLP_TIME_MGNT in 'kernel.s'
+    at line 612 in macro MACRO_KER_RUN_SCHEDULER in 'kernel.s'
+  563 000002a2                       LDR        R1,   =KER_THREAD_SLEEP           ;load sleep addr
+                                                       ^
+"kernel.s", line 934 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_STS', not defined or external
+    at line 585 in macro MACRO_KER_SLP_TIME_MGNT in 'kernel.s'
+    at line 612 in macro MACRO_KER_RUN_SCHEDULER in 'kernel.s'
+  585 000002c2                       LDR        R2,   =KER_THREAD_STS             ;load status base addr
+                                                       ^
+"kernel.s", line 934 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_STS', not defined or external
+    at line 615 in macro MACRO_KER_RUN_SCHEDULER in 'kernel.s'
+  615 000002c8                       LDR        R1,   =KER_THREAD_STS             ;load status base addr
+                                                       ^
+"kernel.s", line 934 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_PRIO', not defined or external
+    at line 627 in macro MACRO_KER_RUN_SCHEDULER in 'kernel.s'
+  627 000002d8                       LDR        R3,   =KER_THREAD_PRIO            ;load prio base addr
+                                                       ^
+"kernel.s", line 965 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_SLEEP', not defined or external
+  965 00000400                       LDR        R2,   =KER_THREAD_SLEEP           ;load sleep base addr
+                                                       ^
+"kernel.s", line 970 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_STS', not defined or external
+  970 00000406                       LDR        R2,   =KER_THREAD_STS             ;load status base addr
+                                                       ^
+"kernel.s", line 1030 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_TOUT', not defined or external
+ 1030 00000442                       LDR        R0,   =KER_THREAD_TOUT            ;load timeout addr
+                                                       ^
+"kernel.s", line 1058 (column 41): Error: A1516E: Bad symbol 'KER_THREAD_TOUT', not defined or external
+ 1058 00000482                       LDR        R0,   =KER_THREAD_TOUT            ;load timeout addr
+                                                       ^
+18 Errors, 0 Warnings
+assembling kernel.s...
+assembling startup_stm32g030xx.s...
+compiling wdt.c...
 compiling debug.c...
 linking...
-Program Size: Code=3400 RO-data=312 RW-data=3152 ZI-data=1648  
-".\Objects\stm32g030_rtos.axf" - 0 Error(s), 0 Warning(s).
+.\Objects\stm32g030_rtos.axf: error: L6002U: Could not open file .\objects\kernel.o: No such file or directory
+Not enough information to list image symbols.
+Not enough information to list load addresses in the image map.
+Finished: 2 information, 0 warning, 0 error and 1 fatal error messages.
+".\Objects\stm32g030_rtos.axf" - 1 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -62,6 +123,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE@6.2.0
+Target not created.
 Build Time Elapsed:  00:00:01
 </pre>
 </body>
