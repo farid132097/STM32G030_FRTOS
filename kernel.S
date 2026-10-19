@@ -34,14 +34,21 @@ DEF_KERNEL_VER_MAJOR  EQU        0x00000001                        ;set kernel v
 DEF_KERNEL_VER_MINOR  EQU        0x00000001                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH  EQU        0x00000001                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE  EQU        0x00000000                        ;enable/disable PLL 64MHz
-DEF_KER_MAX_NTHREAD   EQU        0x0000000A                        ;number of maximum threads
-DEF_KER_STACK_SIZE    EQU        0x00000100                        ;stack size for each thread
-DEF_KER_TCB_SIZE      EQU        0x00000020                        ;task control block size
-DEF_KER_TCB_LSHIFT    EQU        0x00000005                        ;task control block size
+DEF_KER_MAX_THREADS   EQU        0x0000000A                        ;number of maximum threads
 DEF_DBG_GPIO_TICK_EN  EQU        0x00000001                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT     EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN      EQU        0x00000003                        ;pin number, value 00-0fh
 ;;====================================kernel config end======================================;;
+
+
+
+
+
+;;==============================kernel system config starting================================;; 
+DEF_KER_STK_SZ        EQU        0x00000100                        ;stack size for each thread
+DEF_KER_TCB_SZ        EQU        0x00000020                        ;task control block size
+DEF_KER_TCB_LSFT      EQU        0x00000005                        ;TCB sz = (1 << LSFT)
+;;=================================kernel system config end==================================;; 
 
 
 
@@ -120,8 +127,8 @@ DEF_DBG_BSRR_BR_VAL   EQU        ( 1 << DEF_DBG_BSRR_BR_OFF )      ;calculate BR
 
 
 ;;==========================define stack size related value starting=========================;; 
-DEF_KER_SYS_THREADS   EQU        DEF_KER_MAX_NTHREAD + 1                    ;add 1 for idle 
-DEF_KER_STACK_SPACE   EQU        DEF_KER_SYS_THREADS * DEF_KER_STACK_SIZE   ;max stack size
+DEF_KER_SYS_THRD      EQU        DEF_KER_MAX_THREADS + 1           ;add 1 for idle 
+DEF_KER_STK_SPC       EQU        DEF_KER_SYS_THRD * DEF_KER_STK_SZ ;max stack size
 ;;============================define stack size related value end============================;; 
 
 
@@ -149,20 +156,11 @@ THREAD_STS_EXECUTING  EQU        0x04                              ;executing st
 
 
 ;;=========================global variable declaration starting==============================;; 
-                      EXPORT     KER_TICK_TIMERS
+                      EXPORT     KER_THREAD_STK
+                      EXPORT     KER_THREAD_CB
+                      EXPORT     KER_SYS_PROP
+                      EXPORT     KER_TICK_TMRS
                       EXPORT     KER_CPU_USAGE
-                      EXPORT     KER_THREAD_STACK
-                      EXPORT     KER_THREAD_ID
-                      EXPORT     KER_THREAD_CNT
-                      EXPORT     KER_THREAD_PSP
-                      EXPORT     KER_THREAD_PRIO
-                      EXPORT     KER_THREAD_HI_PRIO
-                      EXPORT     KER_THREAD_PRIO_TID
-                      EXPORT     KER_THREAD_SLEEP
-                      EXPORT     KER_THREAD_YIELD
-                      EXPORT     KER_THREAD_STS
-                      EXPORT     KER_THREAD_TOUT
-                      EXPORT     KER_TMP_VAR
 ;;===========================global variable declaration end=================================;; 
 
 
@@ -170,18 +168,17 @@ THREAD_STS_EXECUTING  EQU        0x04                              ;executing st
 
 
 ;;===========================global variable definition starting=============================;; 
-KER_SYSTICK_RLD       SPACE      4                                      ;systick reload val
-KER_TICK_TIMERS       SPACE      16                                     ;8B ss, 4B ss, 4B s
-KER_CPU_USAGE         SPACE      16                                     ;4B tick,4B act, 4B usage 
-KER_THREAD_CNT        SPACE      4                                      ;total created threads
-KER_THREAD_ID         SPACE      4                                      ;current thread id
-KER_THREAD_HI_PRIO    SPACE      4                                      ;highest priority
-KER_THREAD_PRIO_TID   SPACE      4                                      ;highest priority tid
-KER_THREAD_YIELD      SPACE      4                                      ;thread yield status
-KER_TMP_VAR           SPACE      4                                      ;temporary variables
-KER_THREAD_STACK      SPACE      DEF_KER_STACK_SPACE + 0x08             ;total stack space
-;PSP(4B), Prio(4B), STS(4B), SLEEP(4B), TOUT(8B), 24B total
-KER_THREAD_CB         SPACE      DEF_KER_TCB_SIZE * DEF_KER_SYS_THREADS ;thread control block
+;ThrdSTK: stack space for all threads including idle thread, idle thread id is 0
+;ThrdCB : ThrdCBPSP(4B), ThrdCBPrio(4B), ThrdCBSts(4B), ThrdCBSlp(4B), ThrdTout(8B)
+;SysProp: SysPropThrdCnt(4B), SysPropCurrThrdID(4B), SysPropThrdHiPrio(4B) 
+;SysProp: SysPropThrdPrioTID(4B), SysPropThrdYeild(4B), SysPropSystkRld(4B), SysPropTmp(8B)
+;TickTmr: TickTmrSS(8B), TickTmrSSCnt(4B), TickTmrS(4B), SScnt is only for Seconds counter
+;CpuUsge: CpuUsgTick(4B), CpuUsgActTick(4B), CpuUsgVal(4B), CpuUsgAvgVal(4B), x10 Val
+KER_THREAD_STK        SPACE      DEF_KER_STK_SPC                   ;total stack space
+KER_THREAD_CB         SPACE      DEF_KER_TCB_SZ * DEF_KER_SYS_THRD ;thread control block
+KER_SYS_PROP          SPACE      32                                ;system properties
+KER_TICK_TMRS         SPACE      16                                ;8B ss, 4B ss, 4B s
+KER_CPU_USAGE         SPACE      16                                ;4B tick,4B act, 4B val
 ;;=============================global variable definition end================================;; 
 
 
@@ -223,17 +220,18 @@ KER_THREAD_CB         SPACE      DEF_KER_TCB_SIZE * DEF_KER_SYS_THREADS ;thread 
 ;;=======================macro for system variable init starting=============================;; 
                       MACRO                                        ;macro start
                       MACRO_SYS_VAR_INIT                           ;macro name
-                      LDR        R0,   =KER_TICK_TIMERS            ;load tick_timer addr
+                      LDR        R0,   =KER_TICK_TMRS              ;load tick_timer addr
                       MOVS       R1,   #0x00                       ;set val 0
-                      STR        R1,   [R0, #0]                    ;store tick_ss_low val
-					  STR        R1,   [R0, #4]                    ;store tick_ss_high val
-					  STR        R1,   [R0, #8]                    ;store tick_ss_s val
-					  STR        R1,   [R0, #12]                   ;store tick_s val
+                      STR        R1,   [R0, #0]                    ;store tick_ss64_low val
+					  STR        R1,   [R0, #4]                    ;store tick_ss64_high val
+					  STR        R1,   [R0, #8]                    ;store tick_ss32 val
+					  STR        R1,   [R0, #12]                   ;store tick_s32 val
                       LDR        R0,   =KER_CPU_USAGE              ;load cpu_usage addr
                       STR        R1,   [R0, #0]                    ;store total tick val
 					  STR        R1,   [R0, #4]                    ;store active tick val
 					  STR        R1,   [R0, #8]                    ;store cpu usage val
 					  STR        R1,   [R0, #12]                   ;store avg cpu usage val
+					  
                       LDR        R0,   =KER_THREAD_CNT             ;load thread cnt addr
                       STR        R1,   [R0]                        ;store thread cnt val
                       LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
@@ -489,14 +487,17 @@ $ML.EXIT
 
 
 
-;;================================macro for offset starting==================================;; 
+;;============================macro for TCB base addr starting===============================;; 
                       MACRO                                        ;macro start
-                      MACRO_OFFSET_CALC                            ;macro name
+                      MACRO_TCB_OFFSET_CALC                        ;macro name
                       LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
                       LDR        R0,   [R0]                        ;load thread_id val
-                      LSLS       R0,   R0,  #0x02                  ;left shift 2 times to x4
+                      LSLS       R0,   R0,  #DEF_KER_TCB_LSHIFT    ;left shift to multiply
+					  LDR        R1,   =KER_THREAD_CB              ;load tcb base
+					  ADDS       R0,   R0, R1                      ;add offset with base
                       MEND                                         ;macro end
-;;===================================macro for offset end====================================;; 
+;;===============================macro for TCB base addr end=================================;; 
+
 
 
 
@@ -504,11 +505,9 @@ $ML.EXIT
 ;;==============================macro for saving psp starting================================;; 
                       MACRO                                        ;macro start
                       MACRO_SAVE_PSP                               ;macro name
-                      MACRO_OFFSET_CALC                            ;calculate offset, ret R0
-                      LDR        R1,   =KER_THREAD_PSP             ;load thread psp addr base
-                      ADD        R0,   R0,  R1                     ;calc offset from psp base
+					  MACRO_TCB_OFFSET_CALC                        ;calculate TCB offset
                       MRS        R1,   PSP                         ;load PSP in R1
-                      STR        R1,   [R0]                        ;set val to reg
+                      STR        R1,   [R0, #0]                    ;set val to reg
                       MEND                                         ;macro end
 ;;=================================macro for saving psp end==================================;; 
 
@@ -519,12 +518,8 @@ $ML.EXIT
 ;;==============================macro for loading psp starting===============================;; 
                       MACRO                                        ;macro start
                       MACRO_LOAD_PSP                               ;macro name
-					  LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
-                      LDR        R0,   [R0]                        ;load thread_id val
-                      LSLS       R0,   R0,  #DEF_KER_TCB_LSHIFT    ;left shift to multiply
-                      LDR        R1,   =KER_THREAD_CB              ;load thread control block
-                      ADD        R0,   R0,  R1                     ;calc offset from psp base
-                      LDR        R0,   [R0]                        ;load thread PSP
+					  MACRO_TCB_OFFSET_CALC                        ;calculate TCB offset
+                      LDR        R0,   [R0, #0]                    ;load thread PSP
                       MEND                                         ;macro end
 ;;=================================macro for loading psp end=================================;; 
 
@@ -556,103 +551,12 @@ $ML.EXIT
 
 
 
-;;=======================macro for sleep time management starting============================;; 
-                      MACRO                                        ;macro start
-                      MACRO_KER_SLP_TIME_MGNT $ML                  ;macro name, local label
-                      MACRO_OFFSET_CALC                            ;calculate offset, ret R0
-                      LDR        R1,   =KER_THREAD_SLEEP           ;load sleep addr
-                      ADDS       R1,   R1, R0                      ;sleep base+offset
-                      LDR        R2,   [R1]                        ;load sleep duration
-                      CMP        R2,   #0x00                       ;compare with 0
-                      BEQ        $ML.TREADY                        ;jmp to label
-                      
-                      ;check if yield flag(R1 is sleep val addr, R2 is curr sleep val)
-                      LDR        R3,   =KER_THREAD_YIELD           ;load yield flag addr
-                      LDR        R3,   [R3]                        ;load yield flag val
-                      TST        R3,   R3                          ;test val
-                      BNE        $ML.TBLOCKED                      ;if !=0, skip decrement
-$ML.SLPDEC                                                         ;sleep time decrement
-                      SUBS       R2,   R2, #0x01                   ;decrease by 1
-                      STR        R2,   [R1]                        ;store new val
-                      CMP        R2,   #0x00                       ;compare with 0
-                      BEQ        $ML.TREADY                        ;jmp to label
-$ML.TBLOCKED                                                       ;label->thread blocked
-                      LDR        R1,   =THREAD_STS_BLOCKED         ;set status blocked
-                      B          $ML.UPDSTS                        ;jmp to label
-$ML.TREADY                                                         ;label->thread ready
-                      LDR        R1,   =THREAD_STS_READY           ;set status ready
-$ML.UPDSTS                                                         ;label->update status
-                      LDR        R2,   =KER_THREAD_STS             ;load status base addr
-                      ADDS       R2,   R2, R0                      ;base+offset
-                      STR        R1,   [R2]                        ;store status
-$ML.EXIT
-                      MEND                                         ;macro end
-;;=========================macro for sleep time management end===============================;; 
-
-
-
-
-
 ;;============================macro for scheduler starting===================================;; 
                       MACRO                                        ;macro start
-                      MACRO_KER_RUN_SCHEDULER $ML1, $ML2           ;macro name, local label
+                      MACRO_KER_RUN_SCHEDULER $ML                  ;macro name, local label
                       
-                      ;init values before loop entry
-                      MOVS       R0,   #0xFF                       ;set val
-                      LDR        R1,   =KER_THREAD_HI_PRIO         ;load hi-prio addr
-                      STR        R0,   [R1]                        ;store lowest priority
-                      MOVS       R0,   #0x00                       ;set val
-                      LDR        R1,   =KER_THREAD_PRIO_TID        ;load prio tid addr
-                      STR        R0,   [R1]                        ;store prio tid
-                      MOVS       R0,   #0x00                       ;set val
-                      LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
-                      STR        R0,   [R1]                        ;store thread_id
+					  
                       
-$ML2.LP_STRT                                                       ;label-> loop start
-                      MACRO_KER_SLP_TIME_MGNT $ML1                 ;time mangement
-                      
-                      ;calculate offset R0, load status 
-                      LDR        R1,   =KER_THREAD_STS             ;load status base addr
-                      ADDS       R1,   R1, R0                      ;status base+offset
-                      LDR        R1,   [R1]                        ;load status
-                      
-                      ;check if thread ready
-                      LDR        R2,   =THREAD_STS_READY           ;load ready status
-                      CMP        R1,   R2                          ;compare
-                      BNE        $ML2.BL_OR_LP                     ;jmp to label (blocked)
-                      
-                      ;thread is ready
-                      LDR        R1,   =KER_THREAD_HI_PRIO         ;load hi-prio addr
-                      LDR        R2,   [R1]                        ;load hi-prio val
-                      LDR        R3,   =KER_THREAD_PRIO            ;load prio base addr
-                      ADDS       R3,   R3, R0                      ;prio base+offset
-                      LDR        R3,   [R3]                        ;load prio val
-                      
-                      ;check current priority >= highest priority (lower val is higher priority)
-                      CMP        R3,   R2                          ;compare 
-                      BHS        $ML2.BL_OR_LP                     ;jmp to label (low prio)
-                      
-                      ;new high prio found
-                      STR        R3,   [R1]                        ;store new hi-prio
-                      LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
-                      LDR        R0,   [R0]                        ;load thread_id val
-                      LDR        R1,   =KER_THREAD_PRIO_TID        ;load prio thread_id addr
-                      STR        R0,   [R1]                        ;store prio thread_id
-$ML2.BL_OR_LP                                                      ;label->blocked or low priority
-                      LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
-                      LDR        R1,   [R0]                        ;load thread_id val
-                      ADDS       R1,   R1, #1                      ;increment
-                      LDR        R2,   =KER_THREAD_CNT             ;load thread cnt addr
-                      LDR        R2,   [R2]                        ;load thread cnt val
-                      CMP        R1,   R2                          ;compare
-                      BHS        $ML2.LP_END                       ;thread_id>=nthread
-                      STR        R1,   [R0]                        ;store new thread_id
-                      B          $ML2.LP_STRT                      ;loop start
-$ML2.LP_END                                                        ;loop complete
-                      LDR        R0,   =KER_THREAD_ID              ;load thread_id addr
-                      LDR        R1,   =KER_THREAD_PRIO_TID        ;load prio tid addr
-                      LDR        R1,   [R1]                        ;load prio tid val
-                      STR        R1,   [R0]                        ;store new prio tid
 $ML2.EXIT
                       MEND                                         ;macro end
 ;;================================macro for scheduler end====================================;; 
