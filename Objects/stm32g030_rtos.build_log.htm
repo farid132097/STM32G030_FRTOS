@@ -3,43 +3,128 @@
 <pre>
 <h1>µVision Build Log</h1>
 <h2>Tool Versions:</h2>
-IDE-Version: µVision V5.41.0.0
-Copyright (C) 2024 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: faridul islam
-NA
-User-based license: Keil MDK Community (non-commercial free of charge)
-Valid until: Jun 1 2033. Cached until: Oct 25 2026
+IDE-Version: µVision V5.43.1.0
+Copyright (C) 2025 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: Md. Faridul Islam, NA, LIC=----
  
 Tool Versions:
-Toolchain:       Keil MDK Community (non-commercial free of charge  Version: 5.41.0.0
-Toolchain Path:  C:\Keil\ARM\ARMCLANG\Bin
-C Compiler:      ArmClang.exe V6.22
-Assembler:       Armasm.exe V6.22
-Linker/Locator:  ArmLink.exe V6.22
-Library Manager: ArmAr.exe V6.22
-Hex Converter:   FromElf.exe V6.22
-CPU DLL:         SARMCM3.DLL V5.41.0.0
+Toolchain:       MDK-Lite  Version: 5.43.0.0
+Toolchain Path:  C:\Users\Farid\AppData\Local\Keil_v5\ARM\ARMCLANG\Bin
+C Compiler:      ArmClang.exe V6.24
+Assembler:       Armasm.exe V6.24
+Linker/Locator:  ArmLink.exe V6.24
+Library Manager: ArmAr.exe V6.24
+Hex Converter:   FromElf.exe V6.24
+CPU DLL:         SARMCM3.DLL V5.43.0.0
 Dialog DLL:      DARMCM1.DLL V1.19.6.0
-Target DLL:      CMSIS_AGDI.dll V1.33.21.0
+Target DLL:      CMSIS_AGDI.dll V1.33.24.0
 Dialog DLL:      TARMCM1.DLL V1.14.6.0
  
 <h2>Project:</h2>
-E:\Embedded Projects\Running\Keil Projects\STM32G030_FRTOS\stm32g030_rtos.uvprojx
-Project File Date:  10/15/2026
+E:\Embedded_Projects\KEIL\STM32G030_FRTOS\stm32g030_rtos.uvprojx
+Project File Date:  10/20/2026
 
 <h2>Output:</h2>
-*** Using Compiler 'V6.22', folder: 'C:\Keil\ARM\ARMCLANG\Bin'
+*** Using Compiler 'V6.24', folder: 'C:\Users\Farid\AppData\Local\Keil_v5\ARM\ARMCLANG\Bin'
 Rebuild target 'STM32G030F6P6'
-"kernel.s", line 838: Error: A1165E: Too many actual parameters, expecting 1 parameters
-  838 00000296                       MACRO_KER_RUN_SCHEDULER ISRLBL2, ISRLBL3     ;run scheduler, local label
-1 Error, 0 Warnings
-assembling kernel.s...
-assembling startup_stm32g030xx.s...
-compiling threads.c...
 compiling main.c...
-compiling system_stm32g0xx.c...
-compiling gpio.c...
 compiling wdt.c...
+compiling system_stm32g0xx.c...
+compiling threads.c...
+compiling gpio.c...
+assembling startup_stm32g030xx.s...
+"kernel.s", line 699 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_STACK', not defined or external
+  699 00000166                         LDR        R3,   =KER_THREAD_STACK           ;PSP start base
+                                                         ^
+"kernel.s", line 730 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_CNT', not defined or external
+  730 00000194                         LDR        R0,   =KER_THREAD_CNT             ;load thread cnt addr
+                                                         ^
+"kernel.s", line 735 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_PSP', not defined or external
+  735 0000019a                         LDR        R3,   =KER_THREAD_PSP             ;PSP base
+                                                         ^
+"kernel.s", line 740 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_PRIO', not defined or external
+  740 000001a0                         LDR        R2,   =KER_THREAD_PRIO            ;priority base
+                                                         ^
+"kernel.s", line 745 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_SLEEP', not defined or external
+  745 000001a6                         LDR        R1,   =KER_THREAD_SLEEP           ;sleep base
+                                                         ^
+"kernel.s", line 751 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_STS', not defined or external
+  751 000001ae                         LDR        R1,   =KER_THREAD_STS             ;priority base
+                                                         ^
+"kernel.s", line 757 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_CNT', not defined or external
+  757 000001b6                         LDR        R0,   =KER_THREAD_CNT             ;load thread cnt addr
+                                                         ^
+"kernel.s", line 781 (column 43): Error: A1516E: Bad symbol 'DEF_KER_STACK_SIZE', not defined or external
+  781 00000200                         LDR        R0,   =DEF_KER_STACK_SIZE         ;load each stack size
+                                                         ^
+"kernel.s", line 782 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_STACK', not defined or external
+  782 00000202                         LDR        R1,   =KER_THREAD_STACK           ;PSP start base
+                                                         ^
+"kernel.s", line 823 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_PROP', not defined or external
+    at line 487 in macro MACRO_TCB_OFFSET_CALC in 'kernel.s'
+    at line 502 in macro MACRO_SAVE_PSP in 'kernel.s'
+    at line 528 in macro MACRO_CONTEXT_SAVE in 'kernel.s'
+  487 0000026a                         LDR        R0,   =KER_THREAD_PROP            ;load ThrdProp addr
+                                                         ^
+"kernel.s", line 823 (column 48): Error: A1516E: Bad symbol 'DEF_KER_TCB_LSHIFT', not defined or external
+    at line 489 in macro MACRO_TCB_OFFSET_CALC in 'kernel.s'
+    at line 502 in macro MACRO_SAVE_PSP in 'kernel.s'
+    at line 528 in macro MACRO_CONTEXT_SAVE in 'kernel.s'
+  489 0000026e                         LSLS       R0,   R0,  #DEF_KER_TCB_LSHIFT    ;left shift to multiply
+                                                              ^
+"kernel.s", line 828 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_PROP', not defined or external
+    at line 487 in macro MACRO_TCB_OFFSET_CALC in 'kernel.s'
+    at line 515 in macro MACRO_LOAD_PSP in 'kernel.s'
+    at line 539 in macro MACRO_CONTEXT_RESTORE in 'kernel.s'
+  487 000002d8                         LDR        R0,   =KER_THREAD_PROP            ;load ThrdProp addr
+                                                         ^
+"kernel.s", line 828 (column 48): Error: A1516E: Bad symbol 'DEF_KER_TCB_LSHIFT', not defined or external
+    at line 489 in macro MACRO_TCB_OFFSET_CALC in 'kernel.s'
+    at line 515 in macro MACRO_LOAD_PSP in 'kernel.s'
+    at line 539 in macro MACRO_CONTEXT_RESTORE in 'kernel.s'
+  489 000002dc                         LSLS       R0,   R0,  #DEF_KER_TCB_LSHIFT    ;left shift to multiply
+                                                              ^
+"kernel.s", line 850 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_ID', not defined or external
+  850 0000033a                         LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
+                                                         ^
+"kernel.s", line 855 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_SLEEP', not defined or external
+  855 00000340                         LDR        R2,   =KER_THREAD_SLEEP           ;load sleep base addr
+                                                         ^
+"kernel.s", line 860 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_STS', not defined or external
+  860 00000346                         LDR        R2,   =KER_THREAD_STS             ;load status base addr
+                                                         ^
+"kernel.s", line 866 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_YIELD', not defined or external
+  866 0000034e                         LDR        R0,   =KER_THREAD_YIELD           ;load nthread addr
+                                                         ^
+"kernel.s", line 885 (column 43): Error: A1516E: Bad symbol 'KER_TICK_TIMERS', not defined or external
+  885 00000366                         LDR        R0,   =KER_TICK_TIMERS            ;load tick timers addr
+                                                         ^
+"kernel.s", line 896 (column 43): Error: A1516E: Bad symbol 'KER_TICK_TIMERS', not defined or external
+  896 0000036e                         LDR        R0,   =KER_TICK_TIMERS            ;load tick timers addr
+                                                         ^
+"kernel.s", line 908 (column 43): Error: A1516E: Bad symbol 'KER_TICK_TIMERS', not defined or external
+  908 00000378                         LDR        R0,   =KER_TICK_TIMERS            ;load tick timers addr
+                                                         ^
+"kernel.s", line 920 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_TOUT', not defined or external
+  920 00000382                         LDR        R0,   =KER_THREAD_TOUT            ;load timeout addr
+                                                         ^
+"kernel.s", line 921 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_ID', not defined or external
+  921 00000384                         LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
+                                                         ^
+"kernel.s", line 948 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_TOUT', not defined or external
+  948 000003ce                         LDR        R0,   =KER_THREAD_TOUT            ;load timeout addr
+                                                         ^
+"kernel.s", line 949 (column 43): Error: A1516E: Bad symbol 'KER_THREAD_ID', not defined or external
+  949 000003d0                         LDR        R1,   =KER_THREAD_ID              ;load thread_id addr
+                                                         ^
+"kernel.s", line 975 (column 43): Error: A1516E: Bad symbol 'KER_CPU_USAGE', not defined or external
+  975 000003f2                         LDR        R0,   =KER_CPU_USAGE              ;load cpu_usage addr
+                                                         ^
+"kernel.s", line 985 (column 43): Error: A1516E: Bad symbol 'KER_CPU_USAGE', not defined or external
+  985 000003f8                         LDR        R0,   =KER_CPU_USAGE              ;load cpu_usage addr
+                                                         ^
+26 Errors, 0 Warnings
+assembling kernel.s...
 compiling debug.c...
 linking...
 .\Objects\stm32g030_rtos.axf: error: L6002U: Could not open file .\objects\kernel.o: No such file or directory
@@ -63,13 +148,13 @@ Package Vendor: Keil
 
 <h2>Collection of Component include folders:</h2>
   ./RTE/_STM32G030F6P6
-  C:/Keil/ARM/CMSIS/6.3.0/CMSIS/Core/Include
+  C:/Users/Farid/AppData/Local/Arm/Packs/ARM/CMSIS/6.3.0/CMSIS/Core/Include
 
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE@6.2.0
 Target not created.
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:00
 </pre>
 </body>
 </html>
