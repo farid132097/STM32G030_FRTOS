@@ -323,8 +323,8 @@ $ML.HSI16ON
                         STR        R1,   [R0]                        ;store val
 $ML.HSI16READY        
                         LDR        R1,   [R0]                        ;load val
-                        LDR        R0,   =0x400                      ;bit10, HSIRDY
-                        TST        R0,   R1                          ;check bit 10
+                        LDR        R2,   =0x400                      ;bit10, HSIRDY
+                        TST        R2,   R1                          ;check bit 10
                         BEQ        $ML.HSI16READY                    ;wait unitl ready
 $ML.CHECKCONFIG        
                         MOVS       R0,   #DEF_64MHZ_PLL_ENABLE       ;load device config
