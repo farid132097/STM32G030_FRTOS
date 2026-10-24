@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Oct 24, 2026, 11:32 PM
+ ; Last Modified : Oct 24, 2026, 01:02 AM
 
 
 
@@ -33,11 +33,11 @@
 DEF_KERNEL_VER_MAJOR    EQU        0x00000002                        ;set kernel version major
 DEF_KERNEL_VER_MINOR    EQU        0x00000000                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel version patch
-DEF_64MHZ_PLL_ENABLE    EQU        0x00000000                        ;enable/disable PLL 64MHz
-DEF_KER_MAX_THREADS     EQU        0x0000000A                        ;number of maximum threads
-DEF_DBG_GPIO_TICK_EN    EQU        0x00000000                        ;enable/disable gpio toggle
-DEF_DBG_GPIO_PORT       EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
-DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number, value 00-0fh
+DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz
+DEF_KER_MAX_THREADS     EQU        0x0000000C                        ;number of maximum threads
+DEF_DBG_GPIO_TICK_EN    EQU        0x00000001                        ;enable/disable gpio toggle
+DEF_DBG_GPIO_PORT       EQU        0x00000001                        ;value 00-05h,00->A, 01->B..
+DEF_DBG_GPIO_PIN        EQU        0x00000007                        ;pin number, value 00-0fh
 ;;====================================kernel config end======================================;;
 
 
@@ -45,7 +45,7 @@ DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number
 
 
 ;;==============================kernel system config starting================================;; 
-DEF_KER_STK_SZ          EQU        0x00000100                        ;stack size for each thread
+DEF_KER_STK_SZ          EQU        0x00000180                        ;stack size for each thread
 DEF_KER_TCB_SZ          EQU        0x00000020                        ;task control block size
 DEF_KER_TCB_LSFT        EQU        0x00000005                        ;TCB sz = (1 << LSFT)
 ;;=================================kernel system config end==================================;; 
@@ -185,7 +185,7 @@ KER_SYS_VARS            SPACE      80                                ;system var
 
 
 ;;==============================code area definition starting================================;; 
-                        AREA       |.ram_code|, CODE, READONLY, ALIGN=4
+                        AREA       |.code|, CODE, READONLY, ALIGN=4
 ;;=================================code area definition end==================================;; 
 
 
@@ -325,7 +325,7 @@ $ML.HSI16READY
                         LDR        R1,   [R0]                        ;load val
                         LDR        R2,   =0x400                      ;bit10, HSIRDY
                         TST        R2,   R1                          ;check bit 10
-                        BEQ        $ML.HSI16READY                    ;wait unitl ready
+                        BEQ        $ML.HSI16READY                    ;wait until ready
 $ML.CHECKCONFIG        
                         MOVS       R0,   #DEF_64MHZ_PLL_ENABLE       ;load device config
                         BEQ        $ML.CLOCK16MHZ                    ;jump to 16Mhz if 0
@@ -335,17 +335,16 @@ $ML.CLOCK64MHZ
                         STR        R1,   [R0, #64]                   ;store SysVarsSystkRld
                         LDR        R0,   =DEF_FLASH_ACR              ;load addr
                         LDR        R1,   [R0]                        ;load data
-                        MOVS       R2,   #7                          ;load val
-                        MVNS       R2,   R2                          ;invert bits
-                        ANDS       R1,   R1, R2                      ;clear bits 0-2
-                        MOVS       R2,   #2                          ;load val
+                        LDR        R2,   =0x00000307                 ;LAT + PRFTEN + ICEN
+                        BICS       R1,   R1, R2                      ;clear masked bits
+                        LDR        R2,   =0x00000302                 ;2 WS + PRFTEN + ICEN
                         ORRS       R1,   R1, R2                      ;set 2 wait states
                         STR        R1,   [R0]                        ;store val
 $ML.WAITSTATES        
                         LDR        R1,   [R0]                        ;load val
-                        MOVS       R2,   #7                          ;load val
+                        LDR        R2,   =0x00000307                 ;mask LAT + PRFTEN + ICEN
                         ANDS       R1,   R1, R2                      ;mask bits 0-2
-                        MOVS       R2,   #2                          ;load val
+                        LDR        R2,   =0x00000302                 ;expected val
                         CMP        R1,   R2                          ;compare
                         BNE        $ML.WAITSTATES                    ;jmp to label
 $ML.PLLDISABLE        
@@ -451,7 +450,6 @@ $ML.EXIT
                         STR        R1,   [R0, #24]                   ;load data
                         MOV        R1,   R11                         ;copy
                         STR        R1,   [R0, #28]                   ;load data
-                        MSR        PSP,  R0                          ;update new top of stack
                         MEND                                         ;macro end
 ;;============================macro for pushing R4-R11 end===================================;; 
 
@@ -493,7 +491,6 @@ $ML.EXIT
                         LDR        R4,   [R2, #4]                    ;load SysVarsCTID
                         LSLS       R4,   R4, #DEF_KER_TCB_LSFT       ;multiply by TCB size
                         STR        R0,   [R1, R4]                    ;store ThrdCBPSP top
-                        LDR        R0,   =KER_THREAD_STK             ;R0 stack base         [R]
                         MEND                                         ;macro end
 ;;================================macro for context save end=================================;; 
 
@@ -518,10 +515,42 @@ $ML.EXIT
 ;;============================macro for scheduler starting===================================;; 
                         MACRO                                        ;macro start
                         MACRO_KER_RUN_SCHEDULER $ML                  ;macro name, local label
-                        
-                        
-                        
-$ML.EXIT
+                        MOVS       R0,   #0x00                       ;clear loop counter
+                        MOVS       R4,   #0xFF                       ;set lowest prio
+                        MOVS       R5,   #0x00                       ;set prio tid to idle
+                        LDR        R6,   [R2, #0]                    ;load SysVarsTCnt      [R]
+                        MOV        R12,  R6                          ;copy SysVarsTCnt
+						ALIGN      8                                 ;align by 8 bytes
+$ML.LOOP_START                                                       ;scheduler loop starting
+                        LSLS       R6,   R0,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
+                        ADDS       R6,   R6, R1                      ;ThrdCB + offset       [R]
+                        LDR        R7,   [R6, #12]                   ;load ThrdCBSlp        
+                        TST        R7,   R7                          ;test if 0
+                        BEQ        $ML.TREADY                        ;jmp to label
+                        TST        R3,   R3                          ;yield flag            [R]
+                        BNE        $ML.TBLOCKED                      ;if !=0, skip decrement
+                        SUBS       R7,   R7, #0x01                   ;decrease by 1
+                        STR        R7,   [R6, #12]                   ;store ThrdCBSlp        
+                        BEQ        $ML.TREADY                        ;jmp to label
+$ML.TBLOCKED                                                         ;label->thread blocked
+                        MOVS       R7,   #THREAD_STS_BLOCKED         ;set status blocked
+                        STR        R7,   [R6, #8]                    ;store ThrdCBSts
+                        B          $ML.TNEXT                         ;jmp to label
+$ML.TREADY                                                           ;thread is ready
+                        MOVS       R7,   #THREAD_STS_READY           ;set status ready
+                        STR        R7,   [R6, #8]                    ;store ThrdCBSts
+                        LDR        R7,   [R6, #4]                    ;load ThrdCBPrio
+                        CMP        R7,   R4                          ;comp with SysVarsHiPrio
+                        BHS        $ML.TNEXT                         ;jmp to label (low prio)
+                        MOVS       R4,   R7                          ;new SysVarsHiPrio
+                        MOVS       R5,   R0                          ;new SysVarsPrioTID
+$ML.TNEXT                                                            ;blocked or low priority
+                        ADDS       R0,   R0, #1                      ;increment loop cnt
+                        CMP        R0,   R12                         ;compare with SysVarsTCnt
+                        BLO        $ML.LOOP_START                    ;thread_id < SysVarsTCnt
+                        STR        R4,  [R2, #8]                     ;select SysVarsHiPrio  [R]
+                        STR        R5,  [R2, #12]                    ;select SysVarsPrioTID [R]
+                        STR        R5,  [R2, #4]                     ;select SysVarsCTID    [R]
                         MEND                                         ;macro end
 ;;================================macro for scheduler end====================================;; 
 
@@ -752,7 +781,7 @@ SysTick_Handler
                         ;request for PendSV
                         LDR        R0,   =DEF_SCB_ICSR               ;load SCB->ICSR addr
                         LDR        R1,   =0x10000000                 ;load set_PendSV bit
-                        STR        R1,   [R0]                        ;sote val
+                        STR        R1,   [R0]                        ;store val
                         BX         LR                                ;return
 ;;====================================systick isr end========================================;; 
 
@@ -803,10 +832,10 @@ Kernel_Thread_Sleep
                         STR        R0,   [R1, #16]                   ;store SysVarsYields
                         LDR        R0,   =DEF_SCB_ICSR               ;load SCB->ICSR addr
                         LDR        R1,   =0x10000000                 ;load set_PendSV bit
-                        STR        R1,   [R0]                        ;sotree val
+                        STR        R1,   [R0]                        ;store val
                         MSR        PRIMASK, R3                       ;restore interrupt
-                        DSB                                          ;data sync barier
-                        ISB                                          ;instruction sync barier
+                        DSB                                          ;data sync barrier
+                        ISB                                          ;instruction sync barrier
                         BX         LR                                ;return
 ;;=================================kernel thread sleep end===================================;; 
 
@@ -898,10 +927,10 @@ Kernel_Timeout_Status
                         BLO        KER_IS_TOUT_FALSE                 ;jump to false
                         CMP        R0,   R3                          ;compare low words
                         BHI        KER_IS_TOUT_TRUE                  ;jump to true
-KER_IS_TOUT_FALSE                                                    ;timeout not occured
+KER_IS_TOUT_FALSE                                                    ;timeout not occoured
                         MOVS       R0,   #0x00                       ;load false flag
                         B          KER_IS_TOUT_EXIT                  ;jump to exit
-KER_IS_TOUT_TRUE                                                     ;timeout occured
+KER_IS_TOUT_TRUE                                                     ;timeout occoured
                         MOVS       R0,   #0x01                       ;load true flag
 KER_IS_TOUT_EXIT                                                     ;exit label
                         POP        {R4, PC}                          ;return
