@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Oct 17, 2026, 04:28 PM
+ ; Last Modified : Oct 24, 2026, 11:32 PM
 
 
 
@@ -483,51 +483,17 @@ $ML.EXIT
 
 
 
-;;============================macro for TCB base addr starting===============================;; 
-                        MACRO                                        ;macro start
-                        MACRO_TCB_OFFSET_CALC                        ;macro name
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars
-                        LDR        R0,   [R0, #4]                    ;load SysVarsCTID
-                        LSLS       R0,   R0,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
-                        LDR        R1,   =KER_THREAD_CB              ;load tcb base
-                        ADDS       R0,   R0, R1                      ;add offset with base
-                        MEND                                         ;macro end
-;;===============================macro for TCB base addr end=================================;; 
-
-
-
-
-
-;;==============================macro for saving psp starting================================;; 
-                        MACRO                                        ;macro start
-                        MACRO_SAVE_PSP                               ;macro name
-                        MACRO_TCB_OFFSET_CALC                        ;calculate TCB offset
-                        MRS        R1,   PSP                         ;load PSP in R1
-                        STR        R1,   [R0, #0]                    ;set val to reg
-                        MEND                                         ;macro end
-;;=================================macro for saving psp end==================================;; 
-
-
-
-
-
-;;==============================macro for loading psp starting===============================;; 
-                        MACRO                                        ;macro start
-                        MACRO_LOAD_PSP                               ;macro name
-                        MACRO_TCB_OFFSET_CALC                        ;calculate TCB offset
-                        LDR        R0,   [R0, #0]                    ;load thread PSP
-                        MEND                                         ;macro end
-;;=================================macro for loading psp end=================================;; 
-
-
-
-
-
 ;;=============================macro for context save starting===============================;; 
                         MACRO                                        ;macro start
                         MACRO_CONTEXT_SAVE                           ;macro name
-                        MACRO_PUSH_R4_R11                            ;push R4-R11 manually
-                        MACRO_SAVE_PSP                               ;save psp
+                        MACRO_PUSH_R4_R11                            ;push R4-R11, R0 Stk top
+                        LDR        R1,   =KER_THREAD_CB              ;R1 ThrdCB base        [R]
+                        LDR        R2,   =KER_SYS_VARS               ;R2 SysVars base       [R]
+                        LDR        R3,   [R2, #16]                   ;R3 SysVarsYield       [R]
+                        LDR        R4,   [R2, #4]                    ;load SysVarsCTID
+                        LSLS       R4,   R4, #DEF_KER_TCB_LSFT       ;multiply by TCB size
+                        STR        R0,   [R1, R4]                    ;store ThrdCBPSP top
+                        LDR        R0,   =KER_THREAD_STK             ;R0 stack base         [R]
                         MEND                                         ;macro end
 ;;================================macro for context save end=================================;; 
 
@@ -538,8 +504,10 @@ $ML.EXIT
 ;;============================macro for context restore starting=============================;; 
                         MACRO                                        ;macro start
                         MACRO_CONTEXT_RESTORE                        ;macro name
-                        MACRO_LOAD_PSP                               ;load psp
-                        MACRO_POP_R11_R4                             ;pop R11-R4 manually
+                        LDR        R4,   [R2, #4]                    ;load SysVarsCTID      [R]
+                        LSLS       R4,   R4,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
+                        LDR        R0,   [R1, R4]                    ;load thread PSP
+                        MACRO_POP_R11_R4                             ;pop R11-R4 manually   [R]
                         MEND                                         ;macro end
 ;;==============================macro for context restore end================================;; 
 
@@ -550,9 +518,9 @@ $ML.EXIT
 ;;============================macro for scheduler starting===================================;; 
                         MACRO                                        ;macro start
                         MACRO_KER_RUN_SCHEDULER $ML                  ;macro name, local label
-                      
-                      
-                      
+                        
+                        
+                        
 $ML.EXIT
                         MEND                                         ;macro end
 ;;================================macro for scheduler end====================================;; 
@@ -564,29 +532,27 @@ $ML.EXIT
 ;;=====================macro for sub-seconds & seconds counter starting======================;; 
                         MACRO                                        ;macro start
                         MACRO_TMR_UPDT   $ML                         ;macro name
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R1,   [R0, #16]                   ;load SysVarsYield val
-                        TST        R1,   R1                          ;test val
+                        TST        R3,   R3                          ;test val, Yield flag  [R]
                         BNE        $ML.EXIT                          ;jmp to label
-                        LDR        R1,   [R0, #32]                   ;load SysVarsTmrSS64L
-                        ADDS       R1,   R1,  #1                     ;increment val
-                        STR        R1,   [R0, #32]                   ;store SysVarsTmrSS64L
+                        LDR        R4,   [R2, #32]                   ;load SysVarsTmrSS64L  [R]
+                        ADDS       R4,   R4,  #1                     ;increment val
+                        STR        R4,   [R2, #32]                   ;store SysVarsTmrSS64L [R]
                         BNE        $ML.S_CNT_START                   ;jmp to label
-                        LDR        R1,   [R0, #36]                   ;load SysVarsTmrSS64H
-                        ADDS       R1,   R1,  #1                     ;increment val
-                        STR        R1,   [R0, #36]                   ;store SysVarsTmrSS64H
+                        LDR        R4,   [R2, #36]                   ;load SysVarsTmrSS64H  [R]
+                        ADDS       R4,   R4,  #1                     ;increment val
+                        STR        R4,   [R2, #36]                   ;store SysVarsTmrSS64H [R]
 $ML.S_CNT_START                                                      ;start of second counter
-                        LDR        R1,   [R0, #40]                   ;load SysVarsTmrSS32
-                        ADDS       R1,   R1,  #1                     ;increment val
-                        LDR        R2,   =1000                       ;compare with 1000ms
-                        CMP        R1,   R2                          ;compare with val
+                        LDR        R4,   [R2, #40]                   ;load SysVarsTmrSS32   [R]
+                        ADDS       R4,   R4,  #1                     ;increment val
+                        LDR        R5,   =1000                       ;compare with 1000ms
+                        CMP        R4,   R5                          ;compare with val
                         BLO        $ML.SAVE_TICK                     ;no need to inc sec
-                        MOVS       R1,   #0x00                       ;clear counter
-                        LDR        R2,   [R0, #44]                   ;load SysVarsTmrS
-                        ADDS       R2,   R2,  #1                     ;increment val
-                        STR        R2,   [R0, #44]                   ;store SysVarsTmrS
+                        MOVS       R4,   #0x00                       ;clear counter
+                        LDR        R5,   [R2, #44]                   ;load SysVarsTmrS      [R]
+                        ADDS       R5,   R5,  #1                     ;increment val
+                        STR        R5,   [R2, #44]                   ;store SysVarsTmrS     [R]
 $ML.SAVE_TICK                                                        ;save current tick
-                        STR        R1,   [R0, #40]                   ;store SysVarsTmrSS32
+                        STR        R4,   [R2, #40]                   ;store SysVarsTmrSS32  [R]
 $ML.EXIT                                                             ;macro exit
                         MEND                                         ;macro end
 ;;=======================macro for sub-seconds & seconds counter end=========================;; 
@@ -598,32 +564,29 @@ $ML.EXIT                                                             ;macro exit
 ;;========================macro for cpu usage calculation starting===========================;; 
                         MACRO                                        ;macro start
                         MACRO_CPU_USAGE  $ML                         ;macro name
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R1,   [R0, #16]                   ;load SysVarsYield val
-                        TST        R1,   R1                          ;test val
+                        TST        R3,   R3                          ;test val, Yield       [R]
                         BNE        $ML.EXIT                          ;jmp to label
-                        LDR        R1,   [R0, #4]                    ;load SysVarsCTID
-                        TST        R1,   R1                          ;check val
-						LDR        R1,   [R0, #52]                   ;load SysVarsUsgActTick
+                        LDR        R4,   [R2, #4]                    ;load SysVarsCTID      [R]
+                        TST        R4,   R4                          ;check val
+                        LDR        R4,   [R2, #52]                   ;ldr SysVarsUsgActTick [R]
                         BEQ        $ML.SKIP_INC                      ;if thread is idle, skip
-                        ADDS       R1,   R1,  #1                     ;increment val
-                        STR        R1,   [R0, #52]                   ;store SysVarsUsgActTick
+                        ADDS       R4,   R4,  #1                     ;increment val
+                        STR        R4,   [R2, #52]                   ;str SysVarsUsgActTick [R]
 $ML.SKIP_INC                                                         ;label->no increment
-                        LDR        R2,   [R0, #48]                   ;load SysVarsUsgTotTick
-                        ADDS       R2,   R2,  #1                     ;increment val
-                        LDR        R3,   =1000                       ;load compare val
-                        CMP        R2,   R3                          ;compare values
+                        LDR        R5,   [R2, #48]                   ;ldr SysVarsUsgTotTick [R]
+                        ADDS       R5,   R5,  #1                     ;increment val
+                        LDR        R6,   =1000                       ;load compare val
+                        CMP        R5,   R6                          ;compare values
                         BLO        $ML.SKIP_WRAP                     ;jmp to label
-                        MOVS       R2,   #0x00                       ;roll back to 0
-                        STR        R1,   [R0, #56]                   ;store SysVarsUsg
-                        LDR        R3,   [R0, #60]                   ;load SysVarsUsgAvg
-                        LSRS       R1,   R1, #1                      ;divide by 2
-                        LSRS       R3,   R3, #1                      ;divide by 2
-                        ADDS       R1,   R1, R3                      ;prev/2 + curr/2
-                        STR        R1,   [R0, #60]                   ;store SysVarsUsgAvg
-						STR        R2,   [R0, #52]                   ;clear SysVarsUsgActTick
+                        MOVS       R5,   #0x00                       ;SysVarsUsgTotTick to 0
+                        STR        R4,   [R2, #56]                   ;store SysVarsUsg      [R]
+                        LDR        R6,   [R2, #60]                   ;load SysVarsUsgAvg    [R]
+                        ADDS       R4,   R4, R6                      ;curr = prev + curr
+                        LSRS       R4,   R4, #1                      ;curr = curr / 2
+                        STR        R4,   [R2, #60]                   ;store SysVarsUsgAvg   [R]
+                        STR        R5,   [R2, #52]                   ;SysVarsUsgActTick 0   [R]
 $ML.SKIP_WRAP                                                        ;label->no wrapping
-                        STR        R2,   [R0, #48]                   ;store SysVarsUsgTotTick
+                        STR        R5,   [R2, #48]                   ;str SysVarsUsgTotTick [R]
 $ML.EXIT                                                             ;label->exit
                         MEND                                         ;macro end
 ;;===========================macro for cpu usage calculation end=============================;; 
@@ -634,11 +597,9 @@ $ML.EXIT                                                             ;label->exi
 
 ;;===========================macro for clear yield flag starting=============================;; 
                         MACRO                                        ;macro start
-                        MACRO_CLR_YIELD  $ML                         ;macro name
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        MOVS       R1,   #0x00                       ;clear reg
-                        STR        R1,   [R0, #16]                   ;store SysVarsYield
-$ML.EXIT
+                        MACRO_CLR_YIELD                              ;macro name
+                        MOVS       R4,   #0x00                       ;clear reg
+                        STR        R4,   [R2, #16]                   ;store SysVarsYield
                         MEND                                         ;macro end
 ;;=============================macro for clear yield flag end================================;; 
 
@@ -806,11 +767,11 @@ PendSV_Handler
                         MACRO_GPIO_SET          ISRLBL1              ;debug pin set
                         MACRO_CONTEXT_SAVE                           ;save context
                         MACRO_KER_RUN_SCHEDULER ISRLBL2              ;run scheduler, local label
-                        MACRO_TMR_UPDT          ISRLBL4              ;ss and seconds counter
-                        MACRO_CPU_USAGE         ISRLBL5              ;calculate cpu usage
-                        MACRO_CLR_YIELD         ISRLBL6              ;clear yield flag
+                        MACRO_TMR_UPDT          ISRLBL3              ;ss and seconds counter
+                        MACRO_CPU_USAGE         ISRLBL4              ;calculate cpu usage
+                        MACRO_CLR_YIELD                              ;clear yield flag
                         MACRO_CONTEXT_RESTORE                        ;restore context
-                        MACRO_GPIO_CLEAR        ISRLBL7              ;debug pin clear
+                        MACRO_GPIO_CLEAR        ISRLBL5              ;debug pin clear
                         CPSIE      I                                 ;enable interrupt
                         BX         LR                                ;return from interrupt
 ;;================================pending service isr end====================================;; 
