@@ -34,14 +34,14 @@ void THREAD_SysSVC(void)
 __attribute__((noreturn)) 
 void THREAD_Thread1(void)
 {
-	GPIO_PA1_Init();
+	//GPIO_PA1_Init();
 	
 	while(1)
 	{
 		
-		GPIO_PA1_Set();
+		//GPIO_PA1_Set();
 		Kernel_Thread_Sleep(500);
-		GPIO_PA1_Clear();
+		//GPIO_PA1_Clear();
 		Kernel_Thread_Sleep(500);
 		
 	}
@@ -84,4 +84,81 @@ void THREAD_Thread3(void)
 	}
 }
 
+__attribute__((noreturn)) 
+void THREAD_Thread4(void)
+{
+	
+	while(1)
+	{
+		
+		Kernel_Thread_Sleep(2000);
+		
+	}
+}
 
+__attribute__((noreturn)) 
+void THREAD_Thread5(void)
+{
+	
+	while(1)
+	{
+		
+		Kernel_Thread_Sleep(2000);
+		
+	}
+}
+
+__attribute__((noreturn)) 
+void THREAD_Thread6(void)
+{
+	
+	
+	while(1)
+	{
+		
+		Kernel_Thread_Sleep(2000);
+		
+	}
+}
+
+
+__attribute__((noreturn)) 
+void THREAD_Thread7(void)
+{
+	
+	
+	while(1)
+	{
+		
+		Kernel_Thread_Sleep(2000);
+		
+	}
+}
+
+
+__attribute__((noreturn)) 
+void THREAD_Thread8(void)
+{
+	
+	
+	while(1)
+	{
+		
+		Kernel_Thread_Sleep(2000);
+		
+	}
+}
+
+
+__attribute__((noreturn)) 
+void THREAD_Thread9(void)
+{
+	
+	
+	while(1)
+	{
+		
+		Kernel_Thread_Sleep(2000);
+		
+	}
+}
