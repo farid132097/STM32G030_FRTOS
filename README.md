@@ -1,4 +1,4 @@
-# STM32G030 RTOS
+# STM32G030 F-RTOS
 
 A small preemptive, priority-based RTOS kernel for the ARM Cortex-M0+ (ARMv6-M), written entirely in assembly (armasm syntax).
 
