@@ -977,6 +977,7 @@ Kernel_CPU_Usage_Get
 ;;==========================kernel cpu usage average get starting============================;; 
 Kernel_CPU_Usage_Avg_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+						LDR        R0,   [R0, #60]                   ;load SysVarsUsgAvg val
                         MOVS       R1,   #205                        ;load constant
 						MULS       R0,   R1, R0                      ;multiplied by 205
 						LSRS       R0,   R0, #11                     ;divide by 2048
