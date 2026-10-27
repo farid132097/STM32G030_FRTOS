@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\stm32g030_rtos.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\stm32g030_rtos.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6240002: Last Updated: Sun Oct 25 02:50:37 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6220000: Last Updated: Tue Oct 27 17:45:04 2026
 <BR><P>
 <H3>Maximum Stack Usage =         80 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -24,11 +24,13 @@ Functions with no stack information
  <LI><a href="#[54]">Kernel_Tick_S_Get</a>
  <LI><a href="#[3b]">Kernel_Timeout_Set</a>
  <LI><a href="#[3d]">Kernel_Timeout_Status</a>
+ <LI><a href="#[7e]">Kernel_CPU_Usage_Get</a>
+ <LI><a href="#[7f]">Kernel_CPU_Usage_Avg_Get</a>
  <LI><a href="#[55]">Kernel_CPU_Usage_x10_Get</a>
  <LI><a href="#[56]">Kernel_CPU_Usage_Avg_x10_Get</a>
- <LI><a href="#[7e]">Kernel_Version_Major_Get</a>
- <LI><a href="#[7f]">Kernel_Version_Minor_Get</a>
- <LI><a href="#[80]">Kernel_Version_Patch_Get</a>
+ <LI><a href="#[80]">Kernel_Version_Major_Get</a>
+ <LI><a href="#[81]">Kernel_Version_Minor_Get</a>
+ <LI><a href="#[82]">Kernel_Version_Patch_Get</a>
  <LI><a href="#[3f]">__user_initial_stackheap</a>
 </UL>
 </UL>
@@ -288,6 +290,10 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[3c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Kernel_Tick_SS64_Get
 </UL>
 
+<P><STRONG><a name="[7e]"></a>Kernel_CPU_Usage_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code), UNUSED)
+
+<P><STRONG><a name="[7f]"></a>Kernel_CPU_Usage_Avg_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code), UNUSED)
+
 <P><STRONG><a name="[55]"></a>Kernel_CPU_Usage_x10_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code))
 <BR><BR>[Called By]<UL><LI><a href="#[20]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;THREAD_SysSVC
 </UL>
@@ -296,11 +302,11 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[20]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;THREAD_SysSVC
 </UL>
 
-<P><STRONG><a name="[7e]"></a>Kernel_Version_Major_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code), UNUSED)
+<P><STRONG><a name="[80]"></a>Kernel_Version_Major_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code), UNUSED)
 
-<P><STRONG><a name="[7f]"></a>Kernel_Version_Minor_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code), UNUSED)
+<P><STRONG><a name="[81]"></a>Kernel_Version_Minor_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code), UNUSED)
 
-<P><STRONG><a name="[80]"></a>Kernel_Version_Patch_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code), UNUSED)
+<P><STRONG><a name="[82]"></a>Kernel_Version_Patch_Get</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, kernel.o(.code), UNUSED)
 
 <P><STRONG><a name="[0]"></a>Reset_Handler</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, startup_stm32g030xx.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32g030xx.o(RESET)
@@ -413,15 +419,15 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Debug_Determine_Digit_Numbers
 </UL>
 
-<P><STRONG><a name="[81]"></a>__aeabi_idiv</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, aeabi_sdiv.o(.text), UNUSED)
+<P><STRONG><a name="[83]"></a>__aeabi_idiv</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, aeabi_sdiv.o(.text), UNUSED)
 
-<P><STRONG><a name="[82]"></a>__aeabi_idivmod</STRONG> (Thumb, 338 bytes, Stack size 8 bytes, aeabi_sdiv.o(.text), UNUSED)
+<P><STRONG><a name="[84]"></a>__aeabi_idivmod</STRONG> (Thumb, 338 bytes, Stack size 8 bytes, aeabi_sdiv.o(.text), UNUSED)
 
-<P><STRONG><a name="[83]"></a>__use_two_region_memory</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[85]"></a>__use_two_region_memory</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
-<P><STRONG><a name="[84]"></a>__rt_heap_escrow$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[86]"></a>__rt_heap_escrow$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
-<P><STRONG><a name="[85]"></a>__rt_heap_expand$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[87]"></a>__rt_heap_expand$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
 <P><STRONG><a name="[2e]"></a>__user_setup_stackheap</STRONG> (Thumb, 62 bytes, Stack size 8 bytes, sys_stackheap_outer.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8 + Unknown Stack Size
@@ -443,27 +449,27 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_main
 </UL>
 
-<P><STRONG><a name="[86]"></a>__user_libspace</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
+<P><STRONG><a name="[88]"></a>__user_libspace</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[3e]"></a>__user_perproc_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__user_setup_stackheap
 </UL>
 
-<P><STRONG><a name="[87]"></a>__user_perthread_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
+<P><STRONG><a name="[89]"></a>__user_perthread_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[37]"></a>_sys_exit</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, sys_exit.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[36]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_exit_exit
 </UL>
 
-<P><STRONG><a name="[88]"></a>__I$use$semihosting</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
+<P><STRONG><a name="[8a]"></a>__I$use$semihosting</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
 
-<P><STRONG><a name="[89]"></a>__use_no_semihosting_swi</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
+<P><STRONG><a name="[8b]"></a>__use_no_semihosting_swi</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
 
-<P><STRONG><a name="[8a]"></a>__decompress</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __dczerorl.o(.text), UNUSED)
+<P><STRONG><a name="[8c]"></a>__decompress</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __dczerorl.o(.text), UNUSED)
 
-<P><STRONG><a name="[8b]"></a>__decompress0</STRONG> (Thumb, 58 bytes, Stack size unknown bytes, __dczerorl.o(.text), UNUSED)
+<P><STRONG><a name="[8d]"></a>__decompress0</STRONG> (Thumb, 58 bytes, Stack size unknown bytes, __dczerorl.o(.text), UNUSED)
 
-<P><STRONG><a name="[8c]"></a>__semihosting_library_function</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, indicate_semi.o(.text), UNUSED)
+<P><STRONG><a name="[8e]"></a>__semihosting_library_function</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, indicate_semi.o(.text), UNUSED)
 
 <P><STRONG><a name="[42]"></a>Debug_Config_BAUD_Rate</STRONG> (Thumb, 56 bytes, Stack size 16 bytes, debug.o(.text.Debug_Config_BAUD_Rate))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = Debug_Config_BAUD_Rate &rArr; SystemCoreClockUpdate

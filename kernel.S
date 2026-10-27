@@ -203,7 +203,9 @@ KER_SYS_VARS            SPACE      80                                ;system var
                         EXPORT     Kernel_Tick_S_Get
                         EXPORT     Kernel_Timeout_Set
                         EXPORT     Kernel_Timeout_Status
-                        EXPORT     Kernel_CPU_Usage_x10_Get
+                        EXPORT     Kernel_CPU_Usage_Get
+                        EXPORT     Kernel_CPU_Usage_Avg_Get
+						EXPORT     Kernel_CPU_Usage_x10_Get
                         EXPORT     Kernel_CPU_Usage_Avg_x10_Get
                         EXPORT     Kernel_Version_Major_Get
                         EXPORT     Kernel_Version_Minor_Get
@@ -635,6 +637,7 @@ $ML.EXIT                                                             ;label->exi
 
 
 
+
 ;;===================================idle thread starting====================================;; 
 Kernel_Thread_Idle
                         ;Idle thread, does nothing
@@ -644,10 +647,12 @@ Kernel_Thread_Idle
 
 
 
+
 ;;===============================emit literal pool starting==================================;; 
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -673,10 +678,12 @@ Kernel_Init
 
 
 
+
 ;;===============================emit literal pool starting==================================;; 
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -739,10 +746,12 @@ Kernel_Thread_Create
 
 
 
+
 ;;===============================emit literal pool starting==================================;; 
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -768,10 +777,12 @@ Kernel_Thread_Run_All
 
 
 
+
 ;;===============================emit literal pool starting==================================;; 
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -784,6 +795,7 @@ SysTick_Handler
                         STR        R1,   [R0]                        ;store val
                         BX         LR                                ;return
 ;;====================================systick isr end========================================;; 
+
 
 
 
@@ -808,10 +820,12 @@ PendSV_Handler
 
 
 
+
 ;;===============================emit literal pool starting==================================;; 
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -842,12 +856,14 @@ Kernel_Thread_Sleep
 
 
 
+
 ;;==========================kernel tick 32bit SS val get starting============================;; 
 Kernel_Tick_SS32_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R0,   [R0, #32]                   ;load SysVarsTmrSS64L
                         BX         LR                                ;return
 ;;============================kernel tick 32bit SS val get end===============================;; 
+
 
 
 
@@ -866,12 +882,14 @@ Kernel_Tick_SS64_Get
 
 
 
+
 ;;==========================kernel tick seconds val get starting=============================;; 
 Kernel_Tick_S_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R0,   [R0, #44]                   ;load SysVarsTmrS
                         BX         LR                                ;return
 ;;============================kernel tick seconds val get end================================;; 
+
 
 
 
@@ -900,10 +918,12 @@ Kernel_Timeout_Set
 
 
 
+
 ;;===============================emit literal pool starting==================================;; 
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -939,12 +959,41 @@ KER_IS_TOUT_EXIT                                                     ;exit label
 
 
 
+
+;;==============================kernel cpu usage get starting================================;; 
+Kernel_CPU_Usage_Get
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R0,   [R0, #56]                   ;load SysVarsUsg val
+						MOVS       R1,   #205                        ;load constant
+						MULS       R0,   R1, R0                      ;multiplied by 205
+						LSRS       R0,   R0, #11                     ;divide by 2048
+                        BX         LR                                ;return
+;;=================================kernel cpu usage get end==================================;; 
+
+
+
+
+
+;;==========================kernel cpu usage average get starting============================;; 
+Kernel_CPU_Usage_Avg_Get
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+                        MOVS       R1,   #205                        ;load constant
+						MULS       R0,   R1, R0                      ;multiplied by 205
+						LSRS       R0,   R0, #11                     ;divide by 2048
+                        BX         LR                                ;return
+;;============================kernel cpu usage average get end===============================;; 
+
+
+
+
+
 ;;==============================kernel cpu usage get starting================================;; 
 Kernel_CPU_Usage_x10_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R0,   [R0, #56]                   ;load SysVarsUsg val
                         BX         LR                                ;return
 ;;=================================kernel cpu usage get end==================================;; 
+
 
 
 
