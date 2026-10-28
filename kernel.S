@@ -36,8 +36,8 @@ DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel
 DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz
 DEF_KER_MAX_THREADS     EQU        0x0000000C                        ;number of maximum threads
 DEF_DBG_GPIO_TICK_EN    EQU        0x00000001                        ;enable/disable gpio toggle
-DEF_DBG_GPIO_PORT       EQU        0x00000001                        ;value 00-05h,00->A, 01->B..
-DEF_DBG_GPIO_PIN        EQU        0x00000007                        ;pin number, value 00-0fh
+DEF_DBG_GPIO_PORT       EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
+DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number, value 00-0fh
 ;;====================================kernel config end======================================;;
 
 
@@ -554,8 +554,20 @@ $ML.TNEXT                                                            ;goto next 
 $ML.DONE                                                             ;iteration done
                         SUBS       R5,   R5, R1                      ;byte offset of winner
                         LSRS       R5,   R5, #DEF_KER_TCB_LSFT       ;divide/size = thread id
-						;CMP        R4,   #0                          ;check if prio is neg
-						;BLT        $ML.STORECTID                     ;jump to store thread ID
+                        MEND                                         ;macro end
+;;================================macro for scheduler end====================================;; 
+
+
+
+
+
+;;=========================macro for scheduler exception starting============================;; 
+                        MACRO                                        ;macro start
+                        MACRO_KER_SCHEDULER_EXC $ML                  ;macro name, local label
+						CMP        R5,   #0                          ;idle thread
+						BEQ        $ML.STORECTID                     ;store idle thread id
+						CMP        R4,   #0                          ;check if prio is neg
+						BLT        $ML.STORECTID                     ;jump to store thread ID
 						LDR        R0,   [R2, #68]                   ;load SysVarsAtmOp     [R]
 						TST        R0,   R0                          ;check if atomic cleared
 						BNE        $ML.ATOMICOP                      ;skip storing SysVarsCTID
@@ -563,7 +575,7 @@ $ML.STORECTID                                                        ;store curr
                         STR        R5,   [R2, #4]                    ;select SysVarsCTID    [R]
 $ML.ATOMICOP                                                         ;skip if atomic operation
                         MEND                                         ;macro end
-;;================================macro for scheduler end====================================;; 
+;;============================macro for scheduler exception end==============================;; 
 
 
   
@@ -676,11 +688,12 @@ PendSV_Handler
                         MACRO_GPIO_SET          ISRLBL1              ;debug pin set
                         MACRO_CONTEXT_SAVE                           ;save context
                         MACRO_KER_RUN_SCHEDULER ISRLBL2              ;run scheduler, local label
-                        MACRO_TMR_UPDT          ISRLBL3              ;ss and seconds counter
-                        MACRO_CPU_USAGE         ISRLBL4              ;calculate cpu usage
+						MACRO_KER_SCHEDULER_EXC ISRLBL3              ;exception handler
+                        MACRO_TMR_UPDT          ISRLBL4              ;ss and seconds counter
+                        MACRO_CPU_USAGE         ISRLBL5              ;calculate cpu usage
                         MACRO_CLR_YIELD                              ;clear yield flag
                         MACRO_CONTEXT_RESTORE                        ;restore context
-                        MACRO_GPIO_CLEAR        ISRLBL5              ;debug pin clear
+                        MACRO_GPIO_CLEAR        ISRLBL6              ;debug pin clear
                         CPSIE      I                                 ;enable interrupt
                         BX         LR                                ;return from interrupt
 ;;================================pending service isr end====================================;; 
