@@ -174,7 +174,7 @@ THREAD_STS_EXECUTING    EQU        0x04                              ;executing 
 ;SysVars : SysVarsYield(16), SysVarsLST(20), SysVarsNxtWkupL:H(24, 28)
 ;SysVars : SysVarsTmrSS64L:H(32, 36), SysVarsTmrSS32(40), SysVarsTmrS(44), SysVarsUsgTotTick(48)
 ;SysVars : SysVarsUsgActTick(52), SysVarsUsg(56), SysVarsUsgAvg(60), SysVarsSystkRld(64)
-;SysVars : SysVarsAtmOp(68) Reserved(72, 76) -> system feature related variables will be added
+;SysVars : SysVarsAtmOp(68) SysVarsAtmOpTID(72) SysVarsAtmOpTIDSvd(76)
 KER_THREAD_STK          SPACE      DEF_KER_STK_SPC                   ;thread stack space
 KER_THREAD_CB           SPACE      DEF_KER_TCB_SZ * DEF_KER_SYS_THRD ;thread control block
 KER_SYS_VARS            SPACE      80                                ;system variables
@@ -564,21 +564,28 @@ $ML.DONE                                                             ;iteration 
 ;;=========================macro for scheduler exception starting============================;; 
                         MACRO                                        ;macro start
                         MACRO_KER_SCHEDULER_EXC $ML                  ;macro name, local label
-						CMP        R5,   #0                          ;idle thread
-						BEQ        $ML.STORECTID                     ;store idle thread id
-						CMP        R4,   #0                          ;check if prio is neg
-						BLT        $ML.STORECTID                     ;jump to store thread ID
-						LDR        R0,   [R2, #68]                   ;load SysVarsAtmOp     [R]
-						TST        R0,   R0                          ;check if atomic cleared
-						BNE        $ML.ATOMICOP                      ;skip storing SysVarsCTID
-$ML.STORECTID                                                        ;store curr thread ID
+                        LDR        R0,   [R2, #68]                   ;load SysVarsAtmOp     [R]
+                        TST        R0,   R0                          ;atomic operation?
+                        BEQ        $ML.STORECTID                     ;if no, take R5
+                        CMP        R4,   #0                          ;check if prio is neg
+                        BLT        $ML.STORECTID                     ;system thread preempts
+                        LDR        R6,   [R2, #72]                   ;owner ->SysVarsAtmOpTID
+                        LSLS       R0,   R6, #DEF_KER_TCB_LSFT       ;owner offset
+                        ADDS       R0,   R0, R1                      ;owner TCB
+                        LDR        R0,   [R0, #12]                   ;owner sleep count
+                        TST        R0,   R0                          ;owner asleep?
+                        BNE        $ML.OWNERSLEEP                    ;yes
+                        MOVS       R5,   R6                          ;owner keeps the CPU
+                        B          $ML.STORECTID                     ;store it
+$ML.OWNERSLEEP                                                       ;owner sleep inside lock
+                        MOVS       R5,   #0x00                       ;run idle
+$ML.STORECTID                                                        ;store thread ID
                         STR        R5,   [R2, #4]                    ;select SysVarsCTID    [R]
-$ML.ATOMICOP                                                         ;skip if atomic operation
                         MEND                                         ;macro end
 ;;============================macro for scheduler exception end==============================;; 
 
 
-  
+
 
 
 ;;=====================macro for sub-seconds & seconds counter starting======================;; 
@@ -873,8 +880,13 @@ Kernel_Thread_Run_All
 ;;=============================kernel atomic operation starting==============================;; 
 Kernel_Atomic_Start
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-						MOVS       R1,   #0x01                       ;set atomic operation flag
+                        MOVS       R1,   #0x01                       ;set atomic operation flag
+                        MRS        R2,   PRIMASK                     ;store interrupt state
+                        CPSID      I                                 ;disable interrupts
 						STR        R1,   [R0, #68]                   ;store SysVarsAtmOp
+                        LDR        R3,   [R0, #4]                    ;load SysVarsCTID
+                        STR        R3,   [R0, #72]                   ;store SysVarsAtmOpTID
+                        MSR        PRIMASK, R2                       ;restore interrupt
                         BX         LR                                ;return
 ;;===============================kernel atomic operation end=================================;; 
 

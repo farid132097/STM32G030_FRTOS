@@ -151,12 +151,14 @@ void Debug_Config_Tx(void)
 void Debug_Tx_Byte(uint8_t val)
 {
 	#ifdef DEBUG_TX_PA2
+	while((USART2->ISR & USART_ISR_TXE_TXFNF) != USART_ISR_TXE_TXFNF);
 	USART2->TDR = val;
 	while((USART2->ISR & USART_ISR_TC) != USART_ISR_TC);
 	USART2->ICR|=USART_ICR_TCCF;
 	#endif
 	
 	#ifdef DEBUG_TX_PB6
+	while((USART1->ISR & USART_ISR_TXE_TXFNF) != USART_ISR_TXE_TXFNF);
 	USART1->TDR = val;
 	while((USART1->ISR & USART_ISR_TC) != USART_ISR_TC);
 	USART1->ICR|=USART_ICR_TCCF;
