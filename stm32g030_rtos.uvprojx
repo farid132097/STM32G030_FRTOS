@@ -404,6 +404,11 @@
               <FileType>5</FileType>
               <FilePath>.\asm_test.h</FilePath>
             </File>
+            <File>
+              <FileName>cdefs.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\cdefs.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

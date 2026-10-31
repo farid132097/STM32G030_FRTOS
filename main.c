@@ -8,26 +8,22 @@
 
 int main(void)
 {
-    /*
-    Kernel_Init();
-    Kernel_Thread_Create(Threads_SysThread, 0);
-    Kernel_Thread_Create(Threads_Thread1, 1);
-    Kernel_Thread_Create(Threads_Thread2, 2);
-    Kernel_Thread_Create(Threads_Thread3, 3);
-    Kernel_Thread_Run_All();
-    */
-    
-	C_Test_Startup_Delay(4000);
-	C_Test_RTC_Init();
 	
+	Kernel_Init();
+	Kernel_Thread_Create(THREAD_SysSVC, -1);
+	Kernel_Thread_Create(THREAD_Thread1, 1);
+	Kernel_Thread_Create(THREAD_Thread2, 2);
+	Kernel_Thread_Create(THREAD_Thread3, 3);
+	Kernel_Thread_Create(THREAD_Thread4, 4);
+	Kernel_Thread_Create(THREAD_Thread5, 5);
+	Kernel_Thread_Run_All();
 	
-    while(1)
-    {
-    
-		C_Test_Deep_Sleep();
-        
-        
-    }
+	while(1)
+	{
+		
+		
+		
+	}
 }
 
 
