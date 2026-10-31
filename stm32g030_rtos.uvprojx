@@ -52,7 +52,7 @@
           <OutputName>stm32g030_rtos</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
-          <CreateHexFile>0</CreateHexFile>
+          <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
           <ListingPath>.\Listings\</ListingPath>
@@ -395,14 +395,9 @@
               <FilePath>.\debug.h</FilePath>
             </File>
             <File>
-              <FileName>c_test.h</FileName>
+              <FileName>cdefs.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\c_test.h</FilePath>
-            </File>
-            <File>
-              <FileName>asm_test.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\asm_test.h</FilePath>
+              <FilePath>.\cdefs.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -423,16 +418,6 @@
               <FileName>debug.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\debug.c</FilePath>
-            </File>
-            <File>
-              <FileName>c_test.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\c_test.c</FilePath>
-            </File>
-            <File>
-              <FileName>asm_test.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\asm_test.s</FilePath>
             </File>
           </Files>
         </Group>
@@ -473,6 +458,21 @@
               <FileName>threads.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\threads.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Drivers</GroupName>
+          <Files>
+            <File>
+              <FileName>wdt.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\wdt.h</FilePath>
+            </File>
+            <File>
+              <FileName>wdt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\wdt.c</FilePath>
             </File>
           </Files>
         </Group>

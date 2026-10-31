@@ -2,12 +2,11 @@
 ".\objects\main.o"
 ".\objects\gpio.o"
 ".\objects\debug.o"
-".\objects\c_test.o"
-".\objects\asm_test.o"
 ".\objects\startup_stm32g030xx.o"
 ".\objects\system_stm32g0xx.o"
 ".\objects\kernel.o"
 ".\objects\threads.o"
+".\objects\wdt.o"
 --strict --scatter ".\Objects\stm32g030_rtos.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

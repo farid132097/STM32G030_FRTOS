@@ -3,8 +3,8 @@
         {
             "name": "STM32G030F6P6",
             "includePath": [
-                "e:\\Embedded Projects\\Running\\Keil Projects\\STM32G030_RTOS",
-                "e:\\Embedded Projects\\Running\\Keil Projects\\STM32G030_RTOS\\RTE\\Device"
+                "e:\\Embedded Projects\\Running\\Keil Projects\\STM32G030_FRTOS",
+                "e:\\Embedded Projects\\Running\\Keil Projects\\STM32G030_FRTOS\\RTE\\Device"
             ],
             "defines": [
                 "__alignof__(x)=",
