@@ -21,7 +21,7 @@ void THREAD_SysSVC(void)
 	while(1)
 	{
 		
-		Debug_Tx_Parameter_NL("CPU  ", Kernel_CPU_Usage_Get());
+		Debug_Tx_Text_NL("SysSVC");
 		Kernel_Thread_Sleep(1000);
 		
 	}
@@ -56,6 +56,7 @@ void THREAD_Thread2(void)
 	
 	while(1)
 	{
+		
 		Kernel_Atomic_Start();
 		Debug_Tx_Text_NL("Thrd2");
 		Kernel_Atomic_End();
@@ -93,6 +94,7 @@ void THREAD_Thread4(void)
 	
 	while(1)
 	{
+		
 		Kernel_Atomic_Start();
 		Debug_Tx_Text_NL("Thrd4");
 		Kernel_Atomic_End();
@@ -110,6 +112,7 @@ void THREAD_Thread5(void)
 	
 	while(1)
 	{
+		
 		Kernel_Atomic_Start();
 		Debug_Tx_Text_NL("Thrd5");
 		Kernel_Atomic_End();
@@ -128,6 +131,7 @@ void THREAD_Thread6(void)
 	
 	while(1)
 	{
+		
 		Kernel_Atomic_Start();
 		Debug_Tx_Text_NL("Thrd6");
 		Kernel_Atomic_End();
@@ -146,6 +150,7 @@ void THREAD_Thread7(void)
 	
 	while(1)
 	{
+		
 		Kernel_Atomic_Start();
 		Debug_Tx_Text_NL("Thrd7");
 		Kernel_Atomic_End();
@@ -164,6 +169,7 @@ void THREAD_Thread8(void)
 	
 	while(1)
 	{
+		
 		Kernel_Atomic_Start();
 		Debug_Tx_Text_NL("Thrd8");
 		Kernel_Atomic_End();
@@ -182,6 +188,7 @@ void THREAD_Thread9(void)
 	
 	while(1)
 	{
+		
 		Kernel_Atomic_Start();
 		Debug_Tx_Text_NL("Thrd9");
 		Kernel_Atomic_End();
