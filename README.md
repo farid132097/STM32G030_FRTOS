@@ -7,11 +7,12 @@ A small preemptive, priority-based RTOS kernel for the ARM Cortex-M0+ (ARMv6-M),
 
 ## Overview
 
-- Preemptive scheduling driven by a 1 ms SysTick, with the context switch done in PendSV (lowest priority).
-- Fixed-priority scheduling: the lowest priority number wins, and the lowest thread ID wins ties (no round-robin among equals).
-- Thread 0 is the idle thread (priority `0xFF`), so user threads must use priorities below `0xFF`.
-- `Kernel_Thread_Sleep` blocks the caller for N ticks and yields immediately.
-- 64-bit sub-second tick, seconds counter, per-thread timeouts and CPU usage (x10) are optional features.
+- Fixed-priority scheduling: the lowest priority number wins, and the lowest thread ID wins ties (no round-robin scheduling among equal-priority threads).
+- Thread 0 is the idle thread (priority 0x7F), so user threads must use priorities below 0x7F.
+- Negative-priority threads run cooperatively: they are not preempted by ordinary user threads, but can be preempted by higher-priority system threads.
+- Atomic-operation support allows a thread to retain CPU ownership while its atomic operation is active, preventing ordinary user threads from preempting it. If the owning thread sleeps, the idle thread runs until the owner becomes ready.
+- Kernel_Thread_Sleep blocks the calling thread for N ticks and yields immediately.
+-Optional features include a 64-bit sub-second tick counter, a seconds counter, per-thread timeouts, and CPU usage calculations.
 - 16 MHz (HSI16) or 64 MHz (PLL) system clock, selected with `DEF_64MHZ_PLL_ENABLE`.
 
 ## Register conventions

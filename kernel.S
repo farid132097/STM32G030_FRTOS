@@ -3,11 +3,11 @@
  
  ; File          : kernel.s
  ; Author        : MD. Faridul Islam (faridmdislam@gmail.com)
- ; Source        : https://github.com/farid132097/STM32G030_RTOS
+ ; Source        : https://github.com/farid132097/STM32G030_FRTOS
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Oct 24, 2026, 01:02 AM
+ ; Last Modified : Oct 31, 2026, 01:54 PM
 
 
 
@@ -31,13 +31,13 @@
 
 ;;==================================kernel config starting===================================;; 
 DEF_KERNEL_VER_MAJOR    EQU        0x00000002                        ;set kernel version major
-DEF_KERNEL_VER_MINOR    EQU        0x00000000                        ;set kernel version minor
+DEF_KERNEL_VER_MINOR    EQU        0x00000002                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz
-DEF_KER_MAX_THREADS     EQU        0x0000000C                        ;number of maximum threads
-DEF_DBG_GPIO_TICK_EN    EQU        0x00000001                        ;enable/disable gpio toggle
-DEF_DBG_GPIO_PORT       EQU        0x00000001                        ;value 00-05h,00->A, 01->B..
-DEF_DBG_GPIO_PIN        EQU        0x00000007                        ;pin number, value 00-0fh
+DEF_KER_MAX_THREADS     EQU        0x0000000B                        ;number of maximum threads
+DEF_DBG_GPIO_TICK_EN    EQU        0x00000000                        ;enable/disable gpio toggle
+DEF_DBG_GPIO_PORT       EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
+DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number, value 00-0fh
 ;;====================================kernel config end======================================;;
 
 
@@ -166,15 +166,15 @@ THREAD_STS_EXECUTING    EQU        0x04                              ;executing 
 
 
 ;;===========================global variable definition starting=============================;; 
-;only 3 base addresses will be used to make it easy to load and store with immediate, 
+;only 3 base addresses will be used to make it easy to load and store with immediate,
 ;fields under the bases are described bellow, offsets are inside braces (byte offset)
 ;ThrdSTK : stack space for all threads including idle thread, idle thread id is 0
 ;ThrdCB  : ThrdCBPSP(0), ThrdCBPrio(4), ThrdCBSts(8), ThrdCBSlp(12), ThrdCBToutL:H(16, 20)
 ;SysVars : SysVarsTCnt(0), SysVarsCTID(4), SysVarsHiPrio(8), SysVarsPrioTID(12)
-;SysVars : SysVarsYield(16), SysVarsReserved0 (20, 24, 28)->thread variables will be added
+;SysVars : SysVarsYield(16), SysVarsLST(20), SysVarsNxtWkupL:H(24, 28)
 ;SysVars : SysVarsTmrSS64L:H(32, 36), SysVarsTmrSS32(40), SysVarsTmrS(44), SysVarsUsgTotTick(48)
 ;SysVars : SysVarsUsgActTick(52), SysVarsUsg(56), SysVarsUsgAvg(60), SysVarsSystkRld(64)
-;SysVars : SysVarsReserved1(68, 72, 76) -> system feature related variables will be added
+;SysVars : SysVarsAtmOp(68) SysVarsAtmOpTID(72) Reserved(76)
 KER_THREAD_STK          SPACE      DEF_KER_STK_SPC                   ;thread stack space
 KER_THREAD_CB           SPACE      DEF_KER_TCB_SZ * DEF_KER_SYS_THRD ;thread control block
 KER_SYS_VARS            SPACE      80                                ;system variables
@@ -198,13 +198,14 @@ KER_SYS_VARS            SPACE      80                                ;system var
                         EXPORT     Kernel_Thread_Idle
                         EXPORT     Kernel_Thread_Sleep
                         EXPORT     Kernel_Thread_Run_All
+						EXPORT     Kernel_Atomic_Start
+						EXPORT     Kernel_Atomic_End
                         EXPORT     Kernel_Tick_SS32_Get
                         EXPORT     Kernel_Tick_SS64_Get
                         EXPORT     Kernel_Tick_S_Get
                         EXPORT     Kernel_Timeout_Set
                         EXPORT     Kernel_Timeout_Status
-                        EXPORT     Kernel_CPU_Usage_x10_Get
-                        EXPORT     Kernel_CPU_Usage_Avg_x10_Get
+                        EXPORT     Kernel_CPU_Usage_Get
                         EXPORT     Kernel_Version_Major_Get
                         EXPORT     Kernel_Version_Minor_Get
                         EXPORT     Kernel_Version_Patch_Get
@@ -230,11 +231,17 @@ KER_SYS_VARS            SPACE      80                                ;system var
                         STR        R1,   [R0, #36]                   ;store SysVarsTmrSS64H val
                         STR        R1,   [R0, #40]                   ;store SysVarsTmrSS32 val
                         STR        R1,   [R0, #44]                   ;store SysVarsTmrS val
-                        STR        R1,   [R0, #48]                   ;store SysVarsUsgTotTick val
-                        STR        R1,   [R0, #52]                   ;store SysVarsUsgActTick val
+                        STR        R1,   [R0, #52]                   ;store SysVarsUsgActTick
                         STR        R1,   [R0, #56]                   ;store SysVarsUsg val
                         STR        R1,   [R0, #60]                   ;store SysVarsUsgAvg val
                         STR        R1,   [R0, #64]                   ;store SysVarsSystkRld val
+						STR        R1,   [R0, #68]                   ;store SysVarsAtmOp val
+						LDR        R1,   =1000                       ;load downcount val
+						STR        R1,   [R0, #48]                   ;store SysVarsUsgTotTick
+						LDR        R1,   =0xFFFFFFFF                 ;load 32 bit max val
+						STR        R1,   [R0, #20]                   ;store SysVarsLST val
+						STR        R1,   [R0, #24]                   ;store SysVarsNxtWkupL val
+						STR        R1,   [R0, #28]                   ;store SysVarsNxtWkupH val
                         MEND                                         ;macro end
 ;;==========================macro for system variable init end===============================;; 
 
@@ -515,44 +522,67 @@ $ML.EXIT
 ;;============================macro for scheduler starting===================================;; 
                         MACRO                                        ;macro start
                         MACRO_KER_RUN_SCHEDULER $ML                  ;macro name, local label
-                        MOVS       R0,   #0x00                       ;clear loop counter
-                        MOVS       R4,   #0xFF                       ;set lowest prio
-                        MOVS       R5,   #0x00                       ;set prio tid to idle
-                        LDR        R6,   [R2, #0]                    ;load SysVarsTCnt      [R]
-                        MOV        R12,  R6                          ;copy SysVarsTCnt
-						ALIGN      8                                 ;align by 8 bytes
-$ML.LOOP_START                                                       ;scheduler loop starting
-                        LSLS       R6,   R0,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
-                        ADDS       R6,   R6, R1                      ;ThrdCB + offset       [R]
-                        LDR        R7,   [R6, #12]                   ;load ThrdCBSlp        
+                        LDR        R7,   [R2, #0]                    ;load SysVarsTCnt      [R]
+                        LSLS       R7,   R7, #DEF_KER_TCB_LSFT       ;TCnt * TCB size
+                        ADDS       R7,   R7, R1                      ;compute end pointer
+                        MOV        R8,   R7                          ;copy end pointer to R8
+                        MOVS       R6,   R1                          ;R6 = TCB 0 (idle)
+                        ADDS       R6,   #DEF_KER_TCB_SZ             ;starts at TCB=1
+                        MOVS       R5,   R1                          ;best TCB = idle
+                        MOVS       R4,   #0x7F                       ;best prio = lowest
+                        SUBS       R0,   R3, #1                      ;if yield, r0 = 0      [R]
+                        CMP        R6,   R8                          ;any user thread?
+                        BHS        $ML.DONE                          ;only thread is idle
+                        ALIGN      8                                 ;align loop head
+$ML.LOOP                                                             ;loop starting
+                        LDR        R7,   [R6, #12]                   ;load ThrdCBSlp
                         TST        R7,   R7                          ;test if 0
-                        BEQ        $ML.TREADY                        ;jmp to label
-                        TST        R3,   R3                          ;yield flag            [R]
-                        BNE        $ML.TBLOCKED                      ;if !=0, skip decrement
-                        SUBS       R7,   R7, #0x01                   ;decrease by 1
-                        STR        R7,   [R6, #12]                   ;store ThrdCBSlp        
-                        BEQ        $ML.TREADY                        ;jmp to label
-$ML.TBLOCKED                                                         ;label->thread blocked
-                        MOVS       R7,   #THREAD_STS_BLOCKED         ;set status blocked
-                        STR        R7,   [R6, #8]                    ;store ThrdCBSts
-                        B          $ML.TNEXT                         ;jmp to label
+                        BEQ        $ML.TREADY                        ;not sleeping
+                        ADDS       R7,   R7, R0                      ;if not yield, r0 = -1
+                        STR        R7,   [R6, #12]                   ;store ThrdCBSlp
+                        BNE        $ML.TNEXT                         ;still sleeping
 $ML.TREADY                                                           ;thread is ready
-                        MOVS       R7,   #THREAD_STS_READY           ;set status ready
-                        STR        R7,   [R6, #8]                    ;store ThrdCBSts
                         LDR        R7,   [R6, #4]                    ;load ThrdCBPrio
-                        CMP        R7,   R4                          ;comp with SysVarsHiPrio
-                        BHS        $ML.TNEXT                         ;jmp to label (low prio)
-                        MOVS       R4,   R7                          ;new SysVarsHiPrio
-                        MOVS       R5,   R0                          ;new SysVarsPrioTID
-$ML.TNEXT                                                            ;blocked or low priority
-                        ADDS       R0,   R0, #1                      ;increment loop cnt
-                        CMP        R0,   R12                         ;compare with SysVarsTCnt
-                        BLO        $ML.LOOP_START                    ;thread_id < SysVarsTCnt
-                        STR        R4,  [R2, #8]                     ;select SysVarsHiPrio  [R]
-                        STR        R5,  [R2, #12]                    ;select SysVarsPrioTID [R]
-                        STR        R5,  [R2, #4]                     ;select SysVarsCTID    [R]
+                        CMP        R7,   R4                          ;compare with best
+                        BGE        $ML.TNEXT                         ;not better, skip
+                        MOVS       R4,   R7                          ;new best prio
+                        MOVS       R5,   R6                          ;new best TCB
+$ML.TNEXT                                                            ;goto next thread
+                        ADDS       R6,   #DEF_KER_TCB_SZ             ;next TCB
+                        CMP        R6,   R8                          ;reached end?
+                        BLO        $ML.LOOP                          ;if no, continue
+$ML.DONE                                                             ;iteration done
+                        SUBS       R5,   R5, R1                      ;byte offset of winner
+                        LSRS       R5,   R5, #DEF_KER_TCB_LSFT       ;divide/size = thread id
                         MEND                                         ;macro end
 ;;================================macro for scheduler end====================================;; 
+
+
+
+
+
+;;=========================macro for scheduler exception starting============================;; 
+                        MACRO                                        ;macro start
+                        MACRO_KER_SCHEDULER_EXC $ML                  ;macro name, local label
+                        LDR        R0,   [R2, #68]                   ;load SysVarsAtmOp     [R]
+                        TST        R0,   R0                          ;atomic operation?
+                        BEQ        $ML.STORECTID                     ;if no, take R5
+                        CMP        R4,   #0                          ;check if prio is neg
+                        BLT        $ML.STORECTID                     ;system thread preempts
+                        LDR        R6,   [R2, #72]                   ;owner ->SysVarsAtmOpTID
+                        LSLS       R0,   R6, #DEF_KER_TCB_LSFT       ;owner offset
+                        ADDS       R0,   R0, R1                      ;owner TCB
+                        LDR        R0,   [R0, #12]                   ;owner sleep count
+                        TST        R0,   R0                          ;owner asleep?
+                        BNE        $ML.OWNERSLEEP                    ;yes
+                        MOVS       R5,   R6                          ;owner keeps the CPU
+                        B          $ML.STORECTID                     ;store it
+$ML.OWNERSLEEP                                                       ;owner sleep inside lock
+                        MOVS       R5,   #0x00                       ;run idle
+$ML.STORECTID                                                        ;store thread ID
+                        STR        R5,   [R2, #4]                    ;select SysVarsCTID    [R]
+                        MEND                                         ;macro end
+;;============================macro for scheduler exception end==============================;; 
 
 
 
@@ -597,25 +627,24 @@ $ML.EXIT                                                             ;macro exit
                         BNE        $ML.EXIT                          ;jmp to label
                         LDR        R4,   [R2, #4]                    ;load SysVarsCTID      [R]
                         TST        R4,   R4                          ;check val
-                        LDR        R4,   [R2, #52]                   ;ldr SysVarsUsgActTick [R]
+                        LDR        R4,   [R2, #52]                   ;ldr SysVarsUsgActTick [R] 
                         BEQ        $ML.SKIP_INC                      ;if thread is idle, skip
                         ADDS       R4,   R4,  #1                     ;increment val
                         STR        R4,   [R2, #52]                   ;str SysVarsUsgActTick [R]
 $ML.SKIP_INC                                                         ;label->no increment
-                        LDR        R5,   [R2, #48]                   ;ldr SysVarsUsgTotTick [R]
-                        ADDS       R5,   R5,  #1                     ;increment val
-                        LDR        R6,   =1000                       ;load compare val
-                        CMP        R5,   R6                          ;compare values
-                        BLO        $ML.SKIP_WRAP                     ;jmp to label
-                        MOVS       R5,   #0x00                       ;SysVarsUsgTotTick to 0
+                        LDR        R5,   [R2, #48]                   ;ldr window ticks left [R]
+                        SUBS       R5,   R5,  #1                     ;count down
+                        STR        R5,   [R2, #48]                   ;store window ticks left
+                        BNE        $ML.EXIT                          ;window not over, done
                         STR        R4,   [R2, #56]                   ;store SysVarsUsg      [R]
                         LDR        R6,   [R2, #60]                   ;load SysVarsUsgAvg    [R]
                         ADDS       R4,   R4, R6                      ;curr = prev + curr
                         LSRS       R4,   R4, #1                      ;curr = curr / 2
                         STR        R4,   [R2, #60]                   ;store SysVarsUsgAvg   [R]
-                        STR        R5,   [R2, #52]                   ;SysVarsUsgActTick 0   [R]
-$ML.SKIP_WRAP                                                        ;label->no wrapping
-                        STR        R5,   [R2, #48]                   ;str SysVarsUsgTotTick [R]
+                        MOVS       R6,   #0x00                       ;zero
+                        STR        R6,   [R2, #52]                   ;SysVarsUsgActTick 0   [R]
+                        LDR        R5,   =1000                       ;window length
+                        STR        R5,   [R2, #48]                   ;SysVarsUsgTotTick     [R]
 $ML.EXIT                                                             ;label->exit
                         MEND                                         ;macro end
 ;;===========================macro for cpu usage calculation end=============================;; 
@@ -635,11 +664,47 @@ $ML.EXIT                                                             ;label->exi
 
 
 
-;;===================================idle thread starting====================================;; 
-Kernel_Thread_Idle
-                        ;Idle thread, does nothing
-                        B          .                                 ;forever loop
-;;=====================================idle thread end=======================================;; 
+
+;;===============================emit literal pool starting==================================;; 
+                        ALIGN      4
+                        LTORG
+;;=================================emit literal pool end=====================================;; 
+
+
+
+
+
+;;=================================systick isr starting======================================;; 
+SysTick_Handler
+                        ;request for PendSV
+                        LDR        R0,   =DEF_SCB_ICSR               ;load SCB->ICSR addr
+                        LDR        R1,   =0x10000000                 ;load set_PendSV bit
+                        STR        R1,   [R0]                        ;store val
+                        BX         LR                                ;return
+;;====================================systick isr end========================================;; 
+
+
+
+
+
+;;=============================pending service isr starting==================================;; 
+PendSV_Handler
+                        ;Hardware pushed (address wise, high->low) xPSR,PC,LR,R12,R3-R0
+                        ;Software pushed (address wise, high->low) R11-R4
+                        CPSID      I                                 ;disable interrupts
+                        MACRO_GPIO_SET          ISRLBL1              ;debug pin set
+                        MACRO_CONTEXT_SAVE                           ;save context
+                        MACRO_KER_RUN_SCHEDULER ISRLBL2              ;run scheduler, local label
+						MACRO_KER_SCHEDULER_EXC ISRLBL3              ;exception handler
+                        MACRO_TMR_UPDT          ISRLBL4              ;ss and seconds counter
+                        MACRO_CPU_USAGE         ISRLBL5              ;calculate cpu usage
+                        MACRO_CLR_YIELD                              ;clear yield flag
+                        MACRO_CONTEXT_RESTORE                        ;restore context
+                        MACRO_GPIO_CLEAR        ISRLBL6              ;debug pin clear
+                        CPSIE      I                                 ;enable interrupt
+                        BX         LR                                ;return from interrupt
+;;================================pending service isr end====================================;; 
+
 
 
 
@@ -648,6 +713,7 @@ Kernel_Thread_Idle
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -665,10 +731,11 @@ Kernel_Init
                         ORRS       R1,   R2                          ;set all bits
                         STR        R1,   [R0]                        ;store val
                         LDR        R0,   =Kernel_Thread_Idle         ;load idle thread addr
-                        MOVS       R1,   #0xFF                       ;lowest priority
+                        MOVS       R1,   #0x7F                       ;lowest priority
                         BL         Kernel_Thread_Create              ;create idle thread
                         POP        {R4, PC}                          ;return
 ;;====================================kernel init end========================================;; 
+
 
 
 
@@ -677,6 +744,7 @@ Kernel_Init
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -716,54 +784,37 @@ Kernel_Thread_Create
                         LDR        R3,   =0x01000000                 ;thumb bit set
                         STR        R3,   [R2, #60]                   ;xPSR (Thumb)
                         ;update variables and flags
-                        LDR        R0,   =KER_SYS_VARS              ;load SysVars addr
-                        LDR        R0,   [R0, #0]                   ;SysVarsTCnt
-                        LSLS       R0,   R0, #DEF_KER_TCB_LSFT      ;TCB offset
-                        LDR        R3,   =KER_THREAD_CB             ;load ThrdCB addr
-                        ADDS       R3,   R3, R0                     ;TCB address
-                        STR        R2,   [R3, #0]                   ;store ThrdCBPSP
-                        STR        R1,   [R3, #4]                   ;store ThrdCBPrio
-                        MOVS       R1,   #THREAD_STS_READY          ;set flag
-                        STR        R1,   [R3, #8]                   ;store ThrdCBSts
-                        MOVS       R0,   #0                         ;clear reg
-                        STR        R0,   [R3, #12]                  ;store ThrdCBSlp
-                        STR        R0,   [R3, #16]                  ;store ThrdCBToutL
-                        STR        R0,   [R3, #20]                  ;store ThrdCBToutH
-                        LDR        R0,   =KER_SYS_VARS              ;load SysVars addr
-                        LDR        R1,   [R0, #0]                   ;SysVarsTCnt
-                        ADDS       R1,   R1, #1                     ;increment SysVarsTCnt
-                        STR        R1,   [R0, #0]                   ;store SysVarsTCnt
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R0,   [R0, #0]                    ;SysVarsTCnt
+                        LSLS       R0,   R0, #DEF_KER_TCB_LSFT       ;TCB offset
+                        LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
+                        ADDS       R3,   R3, R0                      ;TCB address
+                        STR        R2,   [R3, #0]                    ;store ThrdCBPSP
+						SXTB       R1,   R1                          ;produce 2's complement
+                        STR        R1,   [R3, #4]                    ;store ThrdCBPrio
+                        MOVS       R1,   #THREAD_STS_READY           ;set flag
+                        STR        R1,   [R3, #8]                    ;store ThrdCBSts
+                        MOVS       R0,   #0                          ;clear reg
+                        STR        R0,   [R3, #12]                   ;store ThrdCBSlp
+                        STR        R0,   [R3, #16]                   ;store ThrdCBToutL
+                        STR        R0,   [R3, #20]                   ;store ThrdCBToutH
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R1,   [R0, #0]                    ;SysVarsTCnt
+                        ADDS       R1,   R1, #1                      ;increment SysVarsTCnt
+                        STR        R1,   [R0, #0]                    ;store SysVarsTCnt
                         BX         LR                                ;return
 ;;====================================thread create end======================================;; 
 
 
 
 
-;;===============================emit literal pool starting==================================;; 
-                        ALIGN      4
-                        LTORG
-;;=================================emit literal pool end=====================================;; 
 
+;;===================================idle thread starting====================================;; 
+Kernel_Thread_Idle
+                        ;Idle thread, does nothing
+                        B          .                                 ;forever loop
+;;=====================================idle thread end=======================================;; 
 
-
-
-;;=================================start threads starting====================================;; 
-Kernel_Thread_Run_All
-                        ;configure SysTick timer
-                        MACRO_SYSTICK_CONFIG                         ;configure systick
-                        ;calculate stack top for this thread
-                        LDR        R0,   =DEF_KER_STK_SZ             ;load each stack size
-                        LDR        R1,   =KER_THREAD_STK             ;stack base
-                        ADDS       R0,   R0, R1                      ;add offset
-                        ;Setup PSP for main
-                        MSR        PSP,  R0                          ;set PSP
-                        MRS        R1,   CONTROL
-                        MOVS       R2,   #0x02
-                        ORRS       R1,   R1, R2                      ;CONTROL.SPSEL = 1
-                        MSR        CONTROL, R1                       ;switch to PSP
-                        ISB                                          ;instruction barrier
-                        B          Kernel_Thread_Idle                ;call a thread
-;;====================================start threads end======================================;; 
 
 
 
@@ -773,45 +824,6 @@ Kernel_Thread_Run_All
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
 
-
-
-
-;;=================================systick isr starting======================================;; 
-SysTick_Handler
-                        ;request for PendSV
-                        LDR        R0,   =DEF_SCB_ICSR               ;load SCB->ICSR addr
-                        LDR        R1,   =0x10000000                 ;load set_PendSV bit
-                        STR        R1,   [R0]                        ;store val
-                        BX         LR                                ;return
-;;====================================systick isr end========================================;; 
-
-
-
-
-;;=============================pending service isr starting==================================;; 
-PendSV_Handler
-                        ;Hardware pushed (address wise, high->low) xPSR,PC,LR,R12,R3-R0
-                        ;Software pushed (address wise, high->low) R11-R4
-                        CPSID      I                                 ;disable interrupts
-                        MACRO_GPIO_SET          ISRLBL1              ;debug pin set
-                        MACRO_CONTEXT_SAVE                           ;save context
-                        MACRO_KER_RUN_SCHEDULER ISRLBL2              ;run scheduler, local label
-                        MACRO_TMR_UPDT          ISRLBL3              ;ss and seconds counter
-                        MACRO_CPU_USAGE         ISRLBL4              ;calculate cpu usage
-                        MACRO_CLR_YIELD                              ;clear yield flag
-                        MACRO_CONTEXT_RESTORE                        ;restore context
-                        MACRO_GPIO_CLEAR        ISRLBL5              ;debug pin clear
-                        CPSIE      I                                 ;enable interrupt
-                        BX         LR                                ;return from interrupt
-;;================================pending service isr end====================================;; 
-
-
-
-
-;;===============================emit literal pool starting==================================;; 
-                        ALIGN      4
-                        LTORG
-;;=================================emit literal pool end=====================================;; 
 
 
 
@@ -842,12 +854,65 @@ Kernel_Thread_Sleep
 
 
 
+
+;;=================================start threads starting====================================;; 
+Kernel_Thread_Run_All
+                        ;configure SysTick timer
+                        MACRO_SYSTICK_CONFIG                         ;configure systick
+                        ;calculate stack top for this thread
+                        LDR        R0,   =DEF_KER_STK_SZ             ;load each stack size
+                        LDR        R1,   =KER_THREAD_STK             ;stack base
+                        ADDS       R0,   R0, R1                      ;add offset
+                        ;Setup PSP for main
+                        MSR        PSP,  R0                          ;set PSP
+                        MRS        R1,   CONTROL
+                        MOVS       R2,   #0x02
+                        ORRS       R1,   R1, R2                      ;CONTROL.SPSEL = 1
+                        MSR        CONTROL, R1                       ;switch to PSP
+                        ISB                                          ;instruction barrier
+                        B          Kernel_Thread_Idle                ;call a thread
+;;====================================start threads end======================================;; 
+
+
+
+
+
+;;=============================kernel atomic operation starting==============================;; 
+Kernel_Atomic_Start
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+                        MOVS       R1,   #0x01                       ;set atomic operation flag
+                        MRS        R2,   PRIMASK                     ;store interrupt state
+                        CPSID      I                                 ;disable interrupts
+						STR        R1,   [R0, #68]                   ;store SysVarsAtmOp
+                        LDR        R3,   [R0, #4]                    ;load SysVarsCTID
+                        STR        R3,   [R0, #72]                   ;store SysVarsAtmOpTID
+                        MSR        PRIMASK, R2                       ;restore interrupt
+                        BX         LR                                ;return
+;;===============================kernel atomic operation end=================================;; 
+
+
+
+
+
+;;=============================kernel atomic operation starting==============================;; 
+Kernel_Atomic_End
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+						MOVS       R1,   #0x00                       ;set atomic operation flag
+						STR        R1,   [R0, #68]                   ;store SysVarsAtmOp
+                        BX         LR                                ;return
+;;===============================kernel atomic operation end=================================;; 
+
+
+
+
+
 ;;==========================kernel tick 32bit SS val get starting============================;; 
 Kernel_Tick_SS32_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R0,   [R0, #32]                   ;load SysVarsTmrSS64L
                         BX         LR                                ;return
 ;;============================kernel tick 32bit SS val get end===============================;; 
+
 
 
 
@@ -866,12 +931,14 @@ Kernel_Tick_SS64_Get
 
 
 
+
 ;;==========================kernel tick seconds val get starting=============================;; 
 Kernel_Tick_S_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R0,   [R0, #44]                   ;load SysVarsTmrS
                         BX         LR                                ;return
 ;;============================kernel tick seconds val get end================================;; 
+
 
 
 
@@ -900,10 +967,12 @@ Kernel_Timeout_Set
 
 
 
+
 ;;===============================emit literal pool starting==================================;; 
                         ALIGN      4
                         LTORG
 ;;=================================emit literal pool end=====================================;; 
+
 
 
 
@@ -939,22 +1008,16 @@ KER_IS_TOUT_EXIT                                                     ;exit label
 
 
 
+
 ;;==============================kernel cpu usage get starting================================;; 
-Kernel_CPU_Usage_x10_Get
+Kernel_CPU_Usage_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #56]                   ;load SysVarsUsg val
+						LDR        R0,   [R0, #60]                   ;load SysVarsUsgAvg val
+                        MOVS       R1,   #205                        ;load constant
+						MULS       R0,   R1, R0                      ;multiplied by 205
+						LSRS       R0,   R0, #11                     ;divide by 2048
                         BX         LR                                ;return
 ;;=================================kernel cpu usage get end==================================;; 
-
-
-
-
-;;==========================kernel cpu usage average get starting============================;; 
-Kernel_CPU_Usage_Avg_x10_Get
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #60]                   ;load SysVarsUsgAvg val
-                        BX         LR                                ;return
-;;============================kernel cpu usage average get end===============================;; 
 
 
 
@@ -994,7 +1057,6 @@ Kernel_Version_Patch_Get
                         ALIGN      4
                         END                                          ;end of file
 ;;====================================kernel file end========================================;; 
-
 
 
 
