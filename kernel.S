@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Oct 31, 2026, 02:42 PM
+ ; Last Modified : Nov 01, 2026, 06:02 PM
 
 
 
@@ -47,8 +47,8 @@ DEF_INFO_BLOCK_SIZE     EQU        0x00000200                        ;info block
 
 ;;==============================kernel system config starting================================;; 
 DEF_KER_STK_SZ          EQU        0x00000180                        ;stack size for each thread
-DEF_KER_TCB_SZ          EQU        0x00000020                        ;task control block size
-DEF_KER_TCB_LSFT        EQU        0x00000005                        ;TCB sz = (1 << LSFT)
+DEF_KER_TCB_SZ          EQU        0x00000040                        ;task control block size
+DEF_KER_TCB_LSFT        EQU        0x00000006                        ;TCB sz = (1 << LSFT)
 ;;=================================kernel system config end==================================;; 
 
 
@@ -167,10 +167,11 @@ THREAD_STS_EXECUTING    EQU        0x04                              ;executing 
 
 
 ;;===========================global variable definition starting=============================;; 
-;only 3 base addresses will be used to make it easy to load and store with immediate,
+;only 3 base addresses will be used to make it easy to load and store with immediate
 ;fields under the bases are described bellow, offsets are inside braces (byte offset)
 ;ThrdSTK : stack space for all threads including idle thread, idle thread id is 0
 ;ThrdCB  : ThrdCBPSP(0), ThrdCBPrio(4), ThrdCBSts(8), ThrdCBSlp(12), ThrdCBToutL:H(16, 20)
+;ThrdCB  : ThrdCBTStmpL:H(24, 28), ThrdCBHrbtET(32), ThrdCBHrbtET(36), Reserved(40-63)
 ;SysVars : SysVarsTCnt(0), SysVarsCTID(4), SysVarsHiPrio(8), SysVarsPrioTID(12)
 ;SysVars : SysVarsYield(16), SysVarsLST(20), SysVarsNxtWkupL:H(24, 28)
 ;SysVars : SysVarsTmrSS64L:H(32, 36), SysVarsTmrSS32(40), SysVarsTmrS(44), SysVarsUsgTotTick(48)
@@ -266,6 +267,7 @@ KER_INFO_BLOCK_END
                         EXPORT     Kernel_Thread_Create
                         EXPORT     Kernel_Thread_Idle
                         EXPORT     Kernel_Thread_Sleep
+                        EXPORT     Kernel_Thread_Heartbeat
                         EXPORT     Kernel_Thread_Run_All
                         EXPORT     Kernel_Atomic_Start
                         EXPORT     Kernel_Atomic_End
@@ -1005,10 +1007,13 @@ Kernel_Thread_Create
                         STR        R1,   [R3, #4]                    ;store ThrdCBPrio
                         MOVS       R1,   #THREAD_STS_READY           ;set flag
                         STR        R1,   [R3, #8]                    ;store ThrdCBSts
-                        MOVS       R0,   #0                          ;clear reg
+                        MOVS       R0,   #0x00                       ;clear reg
                         STR        R0,   [R3, #12]                   ;store ThrdCBSlp
                         STR        R0,   [R3, #16]                   ;store ThrdCBToutL
                         STR        R0,   [R3, #20]                   ;store ThrdCBToutH
+                        STR        R0,   [R3, #24]                   ;store ThrdCBTStmpL
+                        STR        R0,   [R3, #28]                   ;store ThrdCBTStmpH
+                        STR        R0,   [R3, #32]                   ;store ThrdCBHrbtET
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R1,   [R0, #0]                    ;SysVarsTCnt
                         ADDS       R1,   R1, #1                      ;increment SysVarsTCnt
@@ -1060,6 +1065,27 @@ Kernel_Thread_Sleep
                         ISB                                          ;instruction sync barrier
                         BX         LR                                ;return
 ;;=================================kernel thread sleep end===================================;; 
+
+
+
+
+
+;;============================kernel thread heartbeat starting===============================;; 
+Kernel_Thread_Heartbeat
+                        PUSH       {R4, LR}                          ;push, 8 bytes alignment
+                        BL         Kernel_Tick_SS64_Get              ;call function
+						LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
+						LDR        R2,   [R2, #4]                    ;SysVarsCTID
+						LSLS       R2,   R2, #DEF_KER_TCB_LSFT       ;in thread offset
+                        LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
+						ADDS       R2,   R2, R3                      ;my TCB
+						LDR        R3,   [R2, #24]                   ;load ThrdCBTStmpL
+                        STR        R0,   [R2, #24]                   ;store ThrdCBTStmpL
+                        STR        R1,   [R2, #28]                   ;store ThrdCBTStmpH
+                        SUBS       R0,   R0, R3                      ;subtract low words
+                        STR        R0,   [R2, #32]                   ;store ThrdCBHrbtET
+                        POP        {R4, PC}                          ;return
+;;===============================kernel thread heartbeat end=================================;; 
 
 
 

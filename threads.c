@@ -13,7 +13,7 @@
 __attribute__((noreturn)) 
 void THREAD_SysSVC(void)
 {
-	Debug_Init(38400);
+	Debug_Init(115200);
 	Kernel_Print_Info(Debug_Tx_Byte);
 	
 	//add watchdog
@@ -38,6 +38,7 @@ __attribute__((noreturn))
 void THREAD_Thread1(void)
 {
 	
+	//Kernel_Thread_Heartbeat_Set(500);
 	
 	while(1)
 	{
@@ -47,7 +48,7 @@ void THREAD_Thread1(void)
 		Kernel_Atomic_End();
 		
 		Kernel_Thread_Sleep(20);
-		
+		Kernel_Thread_Heartbeat();
 	}
 }
 

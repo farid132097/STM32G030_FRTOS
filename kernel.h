@@ -25,6 +25,7 @@ void     Kernel_Init(void);
 void     Kernel_Thread_Create(void (*func)(void), int8_t prio);
 void     Kernel_Thread_Idle(void);
 void     Kernel_Thread_Sleep(uint32_t val);
+void     Kernel_Thread_Heartbeat(void);
 void     Kernel_Thread_Run_All(void);
 void     Kernel_Atomic_Start(void);
 void     Kernel_Atomic_End(void);
