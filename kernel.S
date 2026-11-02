@@ -7,37 +7,37 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Nov 01, 2026, 06:02 PM
+ ; Last Modified : Nov 02, 2026, 11:15 PM
 
 
 
 
-;;=============================system type definition starting===============================;; 
-                        THUMB                                        ;enable thumb mode
-                        PRESERVE8                                    ;8 bytes stack alignment
-;;===============================system type definition end==================================;; 
-
-
-
-
-
-;;============================constant area definition starting==============================;; 
-                        AREA       |.constdata|, DATA, READONLY
-;;==============================constant area definition end=================================;; 
+;;=============================system type definition starting===============================;;
+                        THUMB                                        ;enable thumb mode        
+                        PRESERVE8                                    ;8 bytes stack alignment  
+;;===============================system type definition end==================================;;
 
 
 
 
 
-;;==================================kernel config starting===================================;; 
-DEF_KERNEL_VER_MAJOR    EQU        0x00000002                        ;set kernel version major
-DEF_KERNEL_VER_MINOR    EQU        0x00000000                        ;set kernel version minor
-DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel version patch
-DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz
+;;============================constant area definition starting==============================;;
+                        AREA       |.constdata|, DATA, READONLY                                
+;;==============================constant area definition end=================================;;
+
+
+
+
+
+;;==================================kernel config starting===================================;;
+DEF_KERNEL_VER_MAJOR    EQU        0x00000002                        ;set kernel version major 
+DEF_KERNEL_VER_MINOR    EQU        0x00000001                        ;set kernel version minor 
+DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel version patch 
+DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz 
 DEF_KER_MAX_THREADS     EQU        0x00000006                        ;number of maximum threads
 DEF_DBG_GPIO_TICK_EN    EQU        0x00000001                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT       EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
-DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number, value 00-0fh
+DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number, value 00-0fh 
 DEF_INFO_BLOCK_SIZE     EQU        0x00000200                        ;info block size 512 bytes
 ;;====================================kernel config end======================================;;
 
@@ -45,26 +45,26 @@ DEF_INFO_BLOCK_SIZE     EQU        0x00000200                        ;info block
 
 
 
-;;==============================kernel system config starting================================;; 
+;;==============================kernel system config starting================================;;
 DEF_KER_STK_SZ          EQU        0x00000180                        ;stack size for each thread
-DEF_KER_TCB_SZ          EQU        0x00000040                        ;task control block size
-DEF_KER_TCB_LSFT        EQU        0x00000006                        ;TCB sz = (1 << LSFT)
-;;=================================kernel system config end==================================;; 
+DEF_KER_TCB_SZ          EQU        0x00000040                        ;task control block size  
+DEF_KER_TCB_LSFT        EQU        0x00000006                        ;TCB sz = (1 << LSFT)     
+;;=================================kernel system config end==================================;;
 
 
 
 
 
-;;===============================define address bases starting===============================;; 
+;;===============================define address bases starting===============================;;
 DEF_PERIPHERAL_BASE     EQU        0x40000000                        ;peripheral start address
-DEF_AHB_BASE            EQU        DEF_PERIPHERAL_BASE + 0x00020000  ;AHB start address
-DEF_IOPORT_BASE         EQU        DEF_PERIPHERAL_BASE + 0x10000000  ;IO port start address
-DEF_GPIO_BASE           EQU        DEF_IOPORT_BASE     + 0x00000000  ;GPIO start address
-DEF_RCC_BASE            EQU        DEF_AHB_BASE        + 0x00001000  ;RCC start address
-DEF_FLASH_BASE          EQU        DEF_AHB_BASE        + 0x00002000  ;Flash start address
-DEF_SCS_BASE            EQU        0xE000E010                        ;SCS start address
-DEF_SCB_BASE            EQU        0xE000ED00                        ;SCB start address
-;;=================================define address bases end==================================;; 
+DEF_AHB_BASE            EQU        DEF_PERIPHERAL_BASE + 0x00020000  ;AHB start address        
+DEF_IOPORT_BASE         EQU        DEF_PERIPHERAL_BASE + 0x10000000  ;IO port start address    
+DEF_GPIO_BASE           EQU        DEF_IOPORT_BASE     + 0x00000000  ;GPIO start address       
+DEF_RCC_BASE            EQU        DEF_AHB_BASE        + 0x00001000  ;RCC start address        
+DEF_FLASH_BASE          EQU        DEF_AHB_BASE        + 0x00002000  ;Flash start address      
+DEF_SCS_BASE            EQU        0xE000E010                        ;SCS start address        
+DEF_SCB_BASE            EQU        0xE000ED00                        ;SCB start address        
+;;=================================define address bases end==================================;;
 
 
 
@@ -271,17 +271,15 @@ KER_INFO_BLOCK_END
                         EXPORT     Kernel_Thread_Run_All
                         EXPORT     Kernel_Atomic_Start
                         EXPORT     Kernel_Atomic_End
-                        EXPORT     Kernel_Tick_SS32_Get
-                        EXPORT     Kernel_Tick_SS64_Get
-                        EXPORT     Kernel_Tick_S_Get
+                        EXPORT     Kernel_Print_Info
+                        EXPORT     Kernel_Tick_SubSeconds_Get
+                        EXPORT     Kernel_Tick_Seconds_Get
                         EXPORT     Kernel_Timeout_Set
                         EXPORT     Kernel_Timeout_Status
                         EXPORT     Kernel_CPU_Usage_Get
                         EXPORT     Kernel_Version_Major_Get
                         EXPORT     Kernel_Version_Minor_Get
                         EXPORT     Kernel_Version_Patch_Get
-                        EXPORT     Kernel_Info_Char_Get
-                        EXPORT     Kernel_Print_Info
                         EXPORT     SysTick_Handler
                         EXPORT     PendSV_Handler
 ;;===========================global function declaration end=================================;; 
@@ -1073,7 +1071,7 @@ Kernel_Thread_Sleep
 ;;============================kernel thread heartbeat starting===============================;; 
 Kernel_Thread_Heartbeat
                         PUSH       {R4, LR}                          ;push, 8 bytes alignment
-                        BL         Kernel_Tick_SS64_Get              ;call function
+                        BL         Kernel_Tick_SubSeconds_Get        ;call function
 						LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
 						LDR        R2,   [R2, #4]                    ;SysVarsCTID
 						LSLS       R2,   R2, #DEF_KER_TCB_LSFT       ;in thread offset
@@ -1143,19 +1141,28 @@ Kernel_Atomic_End
 
 
 
-;;==========================kernel tick 32bit SS val get starting============================;; 
-Kernel_Tick_SS32_Get
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #32]                   ;load SysVarsTmrSS64L
-                        BX         LR                                ;return
-;;============================kernel tick 32bit SS val get end===============================;; 
+;;===============================kernel print info starting==================================;;
+Kernel_Print_Info
+                        PUSH       {R4, R5, R6, LR}                  ;save return addr 
+                        MOVS       R4,   R0                          ;copy function pointer
+                        LDR        R5,   =KER_INFO_BLOCK             ;char pointer
+KER_PRINT_CHAR                                                       ;print start
+                        LDRB       R0,   [R5]                        ;load char
+                        TST        R0,   R0                          ;check if 0
+                        BEQ        KER_PRINT_EXIT                    ;end of string
+                        BLX        R4                                ;call func ptr 
+                        ADDS       R5,   R5, #1                      ;advance pointer
+                        B          KER_PRINT_CHAR                    ;next char
+KER_PRINT_EXIT                                                       ;print end
+                        POP        {R4, R5, R6, PC}                  ;return
+;;=================================kernel print info end=====================================;;
 
 
 
 
 
 ;;==========================kernel tick 64bit SS val get starting============================;;   
-Kernel_Tick_SS64_Get
+Kernel_Tick_SubSeconds_Get
                         MRS        R2,   PRIMASK                     ;store interrupt state
                         CPSID      I                                 ;disable interrupts
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
@@ -1170,7 +1177,7 @@ Kernel_Tick_SS64_Get
 
 
 ;;==========================kernel tick seconds val get starting=============================;; 
-Kernel_Tick_S_Get
+Kernel_Tick_Seconds_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R0,   [R0, #44]                   ;load SysVarsTmrS
                         BX         LR                                ;return
@@ -1184,7 +1191,7 @@ Kernel_Tick_S_Get
 Kernel_Timeout_Set
                         PUSH       {R4, LR}                          ;push, 8 bytes alignment
                         MOV        R4,   R0                          ;copy arg
-                        BL         Kernel_Tick_SS64_Get              ;get 64bit timestamp
+                        BL         Kernel_Tick_SubSeconds_Get        ;get 64bit timestamp
                         MOVS       R2,   #0x00                       ;clear reg
                         ADDS       R0,   R0, R4                      ;SysVarsTmrSS64L + tout
                         ADCS       R1,   R1, R2                      ;SysVarsTmrSS64H + carry
@@ -1222,7 +1229,7 @@ Kernel_Timeout_Status
                         LSLS       R0,   R0, #DEF_KER_TCB_LSFT       ;multiply by TCB size
                         LDR        R1,   =KER_THREAD_CB              ;load ThrdCB addr
                         ADDS       R4,   R1, R0                      ;base + offset
-                        BL         Kernel_Tick_SS64_Get              ;get 64bit timestamp
+                        BL         Kernel_Tick_SubSeconds_Get        ;get 64bit timestamp
                         MRS        R2,   PRIMASK                     ;store interrupt state
                         CPSID      I                                 ;disable interrupts
                         LDR        R3,   [R4, #16]                   ;load ThrdCBToutL
@@ -1280,42 +1287,11 @@ Kernel_Version_Minor_Get
 
 
 
-;;============================kernel version patch get starting==============================;; 
+;;============================kernel version patch get starting==============================;;
 Kernel_Version_Patch_Get
                         MOVS       R0,   #DEF_KERNEL_VER_PATCH       ;load kernel ver patch val
                         BX         LR                                ;return
-;;==============================kernel version patch get end=================================;; 
-
-
-
-
-
-;;============================kernel version patch get starting==============================;; 
-Kernel_Info_Char_Get
-                        LDR        R1,   =KER_INFO_BLOCK             ;load pointer addr
-                        LDRB       R0,   [R1, R0]                    ;load byte with offset
-                        BX         LR                                ;return
-;;==============================kernel version patch get end=================================;; 
-
-
-
-
-;;===============================kernel print info starting==================================;; 
-Kernel_Print_Info
-                        PUSH       {R4, R5, R6, LR}                  ;save return addr
-                        MOVS       R4,   R0                          ;copy function pointer
-                        MOVS       R5,   #0                          ;set loop cnt 0
-KER_PRINT_CHAR        
-                        MOVS       R0,   R5                          ;copy
-                        BL         Kernel_Info_Char_Get              ;get char
-                        TST        R0,   R0                          ;check if 0
-                        BEQ        KER_PRINT_EXIT                    ;exit from func
-                        BLX        R4                                ;jmp to func ptr
-                        ADDS       R5,   R5, #1                      ;increment
-                        BL         KER_PRINT_CHAR                    ;jmp to label
-KER_PRINT_EXIT
-                        POP        {R4, R5, R6, PC}                  ;return
-;;=================================kernel print info end=====================================;;  
+;;==============================kernel version patch get end=================================;;
 
 
 

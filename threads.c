@@ -25,7 +25,7 @@ void THREAD_SysSVC(void)
 	{
 		
 		Debug_Tx_Text_NL     ("SysSVC");
-		Debug_Tx_Parameter_NL("UpTime", Kernel_Tick_SS64_Get());
+		Debug_Tx_Parameter_NL("UpTime", Kernel_Tick_SubSeconds_Get());
 		Debug_Tx_Parameter_NL("CPUUsg", Kernel_CPU_Usage_Get());
 		Kernel_Thread_Sleep(1000);
 		
