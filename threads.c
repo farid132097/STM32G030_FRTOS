@@ -11,7 +11,7 @@ uint8_t comp1 = 1, comp2 = 1;
 __attribute__((noreturn)) 
 void THREAD_SysSVC(void)
 {
-	Debug_Init(38400);
+	Debug_Init(115200);
 	
 	//add watchdog
 	//add thread heartbeat checker
@@ -41,7 +41,7 @@ void THREAD_Thread1(void)
 		Debug_Tx_Text_NL("Thrd1");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(20);
+		Kernel_Thread_Sleep(200);
 		
 	}
 }
@@ -61,7 +61,7 @@ void THREAD_Thread2(void)
 		Debug_Tx_Text_NL("Thrd2");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(22);
+		Kernel_Thread_Sleep(202);
 		
 	}
 }
@@ -81,7 +81,7 @@ void THREAD_Thread3(void)
 		Debug_Tx_Text_NL("Thrd3");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(25);
+		Kernel_Thread_Sleep(205);
 		
 	}
 }

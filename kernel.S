@@ -46,8 +46,8 @@ DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number
 
 ;;==============================kernel system config starting================================;; 
 DEF_KER_STK_SZ          EQU        0x00000180                        ;stack size for each thread
-DEF_KER_TCB_SZ          EQU        0x00000020                        ;task control block size
-DEF_KER_TCB_LSFT        EQU        0x00000005                        ;TCB sz = (1 << LSFT)
+DEF_KER_TCB_SZ          EQU        0x00000040                        ;task control block size
+DEF_KER_TCB_LSFT        EQU        0x00000006                        ;TCB sz = (1 << LSFT)
 ;;=================================kernel system config end==================================;; 
 
 
@@ -166,15 +166,17 @@ THREAD_STS_EXECUTING    EQU        0x04                              ;executing 
 
 
 ;;===========================global variable definition starting=============================;; 
-;only 3 base addresses will be used to make it easy to load and store with immediate,
+;only 3 base addresses will be used to make it easy to load and store with immediate
 ;fields under the bases are described bellow, offsets are inside braces (byte offset)
 ;ThrdSTK : stack space for all threads including idle thread, idle thread id is 0
 ;ThrdCB  : ThrdCBPSP(0), ThrdCBPrio(4), ThrdCBSts(8), ThrdCBSlp(12), ThrdCBToutL:H(16, 20)
+;ThrdCB  : ThrdCBTStmpL:H(24, 28), ThrdCBHbCnt(32), ThrdCBHbMax(36),ThrdCBHlth(40),
+;ThrdCB  : ThrdCBDead(44), Reserved(48-63)
 ;SysVars : SysVarsTCnt(0), SysVarsCTID(4), SysVarsHiPrio(8), SysVarsPrioTID(12)
 ;SysVars : SysVarsYield(16), SysVarsLST(20), SysVarsNxtWkupL:H(24, 28)
 ;SysVars : SysVarsTmrSS64L:H(32, 36), SysVarsTmrSS32(40), SysVarsTmrS(44), SysVarsUsgTotTick(48)
 ;SysVars : SysVarsUsgActTick(52), SysVarsUsg(56), SysVarsUsgAvg(60), SysVarsSystkRld(64)
-;SysVars : SysVarsAtmOp(68) SysVarsAtmOpTID(72) SysVarsAtmOpTIDSvd(76)
+;SysVars : SysVarsAtmOp(68) SysVarsAtmOpTID(72) Reserved(76)
 KER_THREAD_STK          SPACE      DEF_KER_STK_SPC                   ;thread stack space
 KER_THREAD_CB           SPACE      DEF_KER_TCB_SZ * DEF_KER_SYS_THRD ;thread control block
 KER_SYS_VARS            SPACE      80                                ;system variables
@@ -197,14 +199,14 @@ KER_SYS_VARS            SPACE      80                                ;system var
                         EXPORT     Kernel_Thread_Create
                         EXPORT     Kernel_Thread_Idle
                         EXPORT     Kernel_Thread_Sleep
+						EXPORT     Kernel_Thread_Heartbeat
                         EXPORT     Kernel_Thread_Run_All
 						EXPORT     Kernel_Atomic_Start
 						EXPORT     Kernel_Atomic_End
-                        EXPORT     Kernel_Tick_SS32_Get
-                        EXPORT     Kernel_Tick_SS64_Get
-                        EXPORT     Kernel_Tick_S_Get
+                        EXPORT     Kernel_Tick_SubSeconds_Get
+                        EXPORT     Kernel_Tick_Seconds_Get
                         EXPORT     Kernel_Timeout_Set
-                        EXPORT     Kernel_Timeout_Status
+                        EXPORT     Kernel_Timeout_Status_Get
                         EXPORT     Kernel_CPU_Usage_Get
                         EXPORT     Kernel_Version_Major_Get
                         EXPORT     Kernel_Version_Minor_Get
@@ -798,6 +800,9 @@ Kernel_Thread_Create
                         STR        R0,   [R3, #12]                   ;store ThrdCBSlp
                         STR        R0,   [R3, #16]                   ;store ThrdCBToutL
                         STR        R0,   [R3, #20]                   ;store ThrdCBToutH
+						STR        R0,   [R3, #24]                   ;store ThrdCBTStmpL
+                        STR        R0,   [R3, #28]                   ;store ThrdCBTStmpH
+                        STR        R0,   [R3, #32]                   ;store ThrdCBHbCnt
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R1,   [R0, #0]                    ;SysVarsTCnt
                         ADDS       R1,   R1, #1                      ;increment SysVarsTCnt
@@ -855,6 +860,30 @@ Kernel_Thread_Sleep
 
 
 
+;;============================kernel thread heartbeat starting===============================;; 
+Kernel_Thread_Heartbeat
+                        PUSH       {R4, LR}                          ;push, 8 bytes alignment
+                        BL         Kernel_Tick_SubSeconds_Get        ;call function
+						LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
+						LDR        R2,   [R2, #4]                    ;SysVarsCTID
+						LSLS       R2,   R2, #DEF_KER_TCB_LSFT       ;in thread offset
+                        LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
+						ADDS       R2,   R2, R3                      ;my TCB
+                        LDR        R3,   [R2, #32]                   ;load ThrdCBHbCnt
+                        ADDS       R3,   R3, #1                      ;increment val
+                        MRS        R4,   PRIMASK                     ;store interrupt state
+                        CPSID      I                                 ;disable interrupts
+                        STR        R0,   [R2, #24]                   ;store ThrdCBTStmpL
+                        STR        R1,   [R2, #28]                   ;store ThrdCBTStmpH
+                        STR        R3,   [R2, #32]                   ;store ThrdCBHbCnt
+                        MSR        PRIMASK, R4                       ;restore interrupt
+                        POP        {R4, PC}                          ;return
+;;===============================kernel thread heartbeat end=================================;; 
+
+
+
+
+
 ;;=================================start threads starting====================================;; 
 Kernel_Thread_Run_All
                         ;configure SysTick timer
@@ -906,25 +935,15 @@ Kernel_Atomic_End
 
 
 
-;;==========================kernel tick 32bit SS val get starting============================;; 
-Kernel_Tick_SS32_Get
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #32]                   ;load SysVarsTmrSS64L
-                        BX         LR                                ;return
-;;============================kernel tick 32bit SS val get end===============================;; 
-
-
-
-
-
 ;;==========================kernel tick 64bit SS val get starting============================;;   
-Kernel_Tick_SS64_Get
-                        MRS        R2,   PRIMASK                     ;store interrupt state
-                        CPSID      I                                 ;disable interrupts
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R1,   [R0, #36]                   ;load SysVarsTmrSS64H
-                        LDR        R0,   [R0, #32]                   ;load SysVarsTmrSS64L
-                        MSR        PRIMASK, R2                       ;restore interrupt
+Kernel_Tick_SubSeconds_Get
+                        LDR        R3,   =KER_SYS_VARS               ;load SysVars addr
+KER_TICK64_RETRY                                                     ;retry label
+                        LDR        R1,   [R3, #36]                   ;load SysVarsTmrSS64H
+                        LDR        R0,   [R3, #32]                   ;load SysVarsTmrSS64L
+                        LDR        R2,   [R3, #36]                   ;load SysVarsTmrSS64H
+                        CMP        R1,   R2                          ;changed during the read?
+                        BNE        KER_TICK64_RETRY                  ;SysVarsTmrSS64H diff, rty
                         BX         LR                                ;return
 ;;============================kernel tick 64bit SS val get end===============================;; 
 
@@ -933,7 +952,7 @@ Kernel_Tick_SS64_Get
 
 
 ;;==========================kernel tick seconds val get starting=============================;; 
-Kernel_Tick_S_Get
+Kernel_Tick_Seconds_Get
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R0,   [R0, #44]                   ;load SysVarsTmrS
                         BX         LR                                ;return
@@ -944,10 +963,35 @@ Kernel_Tick_S_Get
 
 
 ;;==============================kernel timeout set starting==================================;; 
+Kernel_Watchdog_Set
+                        PUSH       {R4, LR}                          ;push, 8 bytes alignment
+                        MOV        R4,   R0                          ;copy arg
+                        BL         Kernel_Tick_SubSeconds_Get        ;get 64bit timestamp
+                        MOVS       R2,   #0x00                       ;clear reg
+                        ADDS       R0,   R0, R4                      ;SysVarsTmrSS64L + tout
+                        ADCS       R1,   R1, R2                      ;SysVarsTmrSS64H + carry
+                        LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R2,   [R2, #4]                    ;load SysVarsCTID
+                        LSLS       R2,   R2, #DEF_KER_TCB_LSFT       ;multiply by TCB size
+                        LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
+                        ADDS       R3,   R3, R2                      ;base + offset
+                        MRS        R4,   PRIMASK                     ;store interrupt state
+                        CPSID      I                                 ;disable interrupts
+                        STR        R0,   [R3, #16]                   ;store ThrdCBToutL
+                        STR        R1,   [R3, #20]                   ;store ThrdCBToutH
+                        MSR        PRIMASK, R4                       ;restore interrupt
+                        POP        {R4, PC}                          ;return
+;;=================================kernel timeout set end====================================;; 
+
+
+
+
+
+;;==============================kernel timeout set starting==================================;; 
 Kernel_Timeout_Set
                         PUSH       {R4, LR}                          ;push, 8 bytes alignment
                         MOV        R4,   R0                          ;copy arg
-                        BL         Kernel_Tick_SS64_Get              ;get 64bit timestamp
+                        BL         Kernel_Tick_SubSeconds_Get        ;get 64bit timestamp
                         MOVS       R2,   #0x00                       ;clear reg
                         ADDS       R0,   R0, R4                      ;SysVarsTmrSS64L + tout
                         ADCS       R1,   R1, R2                      ;SysVarsTmrSS64H + carry
@@ -978,14 +1022,14 @@ Kernel_Timeout_Set
 
 
 ;;============================kernel timeout status get starting=============================;; 
-Kernel_Timeout_Status 
+Kernel_Timeout_Status_Get 
                         PUSH       {R4, LR}                          ;push, 8 bytes alignment
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R0,   [R0, #4]                    ;load SysVarsCTID
                         LSLS       R0,   R0, #DEF_KER_TCB_LSFT       ;multiply by TCB size
                         LDR        R1,   =KER_THREAD_CB              ;load ThrdCB addr
                         ADDS       R4,   R1, R0                      ;base + offset
-                        BL         Kernel_Tick_SS64_Get              ;get 64bit timestamp
+                        BL         Kernel_Tick_SubSeconds_Get        ;get 64bit timestamp
                         MRS        R2,   PRIMASK                     ;store interrupt state
                         CPSID      I                                 ;disable interrupts
                         LDR        R3,   [R4, #16]                   ;load ThrdCBToutL
