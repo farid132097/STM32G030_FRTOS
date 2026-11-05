@@ -30,8 +30,8 @@
 
 
 ;;==================================kernel config starting===================================;; 
-DEF_KERNEL_VER_MAJOR    EQU        0x00000002                        ;set kernel version major
-DEF_KERNEL_VER_MINOR    EQU        0x00000001                        ;set kernel version minor
+DEF_KERNEL_VER_MAJOR    EQU        0x00000003                        ;set kernel version major
+DEF_KERNEL_VER_MINOR    EQU        0x00000000                        ;set kernel version minor
 DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz
 DEF_KER_MAX_THREADS     EQU        0x0000000B                        ;number of maximum threads
@@ -46,7 +46,8 @@ DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number
 
 ;;==============================kernel system config starting================================;; 
 DEF_KER_STK_SZ          EQU        0x00000180                        ;stack size for each thread
-DEF_KER_TCB_SZ          EQU        0x00000040                        ;task control block size
+DEF_KER_TCB_SZ          EQU        0x00000040                        ;thread control block size
+DEF_KER_ERR_LOG_SZ      EQU        0x00000020                        ;total error log size
 DEF_KER_TCB_LSFT        EQU        0x00000006                        ;TCB sz = (1 << LSFT)
 ;;=================================kernel system config end==================================;; 
 
@@ -177,9 +178,11 @@ THREAD_STS_EXECUTING    EQU        0x04                              ;executing 
 ;SysVars : SysVarsTmrSS64L:H(32, 36), SysVarsTmrSS32(40), SysVarsTmrS(44), SysVarsUsgTotTick(48)
 ;SysVars : SysVarsUsgActTick(52), SysVarsUsg(56), SysVarsUsgAvg(60), SysVarsSystkRld(64)
 ;SysVars : SysVarsAtmOp(68) SysVarsAtmOpTID(72) Reserved(76)
+;ErrLogs : ErrLogsTID(0) + ErrLogsEID(1), ErrLogsTID(2) + ErrLogsEID(3)....
 KER_THREAD_STK          SPACE      DEF_KER_STK_SPC                   ;thread stack space
 KER_THREAD_CB           SPACE      DEF_KER_TCB_SZ * DEF_KER_SYS_THRD ;thread control block
 KER_SYS_VARS            SPACE      80                                ;system variables
+KER_ERR_LOG             SPACE      DEF_KER_ERR_LOG_SZ * 2            ;error logs for threads
 ;;=============================global variable definition end================================;; 
 
 
@@ -253,21 +256,19 @@ KER_SYS_VARS            SPACE      80                                ;system var
 
 ;;==========================macro for debug gpio init starting===============================;; 
                         MACRO                                        ;macro start
-                        MACRO_GPIO_INIT  $ML                         ;macro name
-                        ;if debug disabled, skip
-                        MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
-                        BEQ        $ML.EXIT                          ;jump to exit
-                        ;enable clock from rcc
+                        MACRO_GPIO_INIT                              ;macro name
+						IF         DEF_DBG_GPIO_TICK_EN == 0x01      ;if debug enabled
+                        ;enable clock from rcc                       ;rcc config
                         LDR        R0,   =DEF_RCC_IOPENR             ;load IOPENR address
                         LDR        R1,   [R0]                        ;load IOPENR val
                         LDR        R2,   =DEF_DBG_GPIO_PORT_BM       ;load bit mask val
                         ORRS       R1,   R1, R2                      ;set bit WRT PORT
                         STR        R1,   [R0]                        ;store val to IOPENR
-                        ;set BSRR->BR->pin low
+                        ;set BSRR->BR->pin low                       ;output config
                         LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
                         LDR        R1,   =DEF_DBG_BSRR_BR_VAL        ;load BSRR->BR val
                         STR        R1,   [R0]                        ;store val
-                        ;set pin as general purpose i/o
+                        ;set pin as general purpose i/o              ;mode config
                         LDR        R0,   =DEF_DBG_GPIO_MODER         ;load MODER address
                         LDR        R1,   [R0]                        ;load MODER val
                         LDR        R2,   =DEF_DBG_GPIO_PIN_GM        ;load MODER group mask val
@@ -276,7 +277,7 @@ KER_SYS_VARS            SPACE      80                                ;system var
                         LDR        R2,   =DEF_DBG_GPIO_PIN_OUT       ;load MODER ->out val
                         ORRS       R1,   R1, R2                      ;set output mode
                         STR        R1,   [R0]                        ;store val to MODER
-$ML.EXIT                                                                                         
+                        ENDIF                                        ;config end
                         MEND                                         ;macro end
 ;;==========================macro for debug gpio init end====================================;; 
 
@@ -286,14 +287,12 @@ $ML.EXIT
 
 ;;===========================macro for gpio set starting=====================================;; 
                         MACRO                                        ;macro start
-                        MACRO_GPIO_SET   $ML                         ;macro name
-                        ;if debug disabled, skip
-                        MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
-                        BEQ        $ML.EXIT                          ;jump to exit
+                        MACRO_GPIO_SET                               ;macro name
+                        IF         DEF_DBG_GPIO_TICK_EN == 0x01      ;if debug enabled
                         LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
                         LDR        R1,   =DEF_DBG_BSRR_BS_VAL        ;load bit set val
                         STR        R1,   [R0]                        ;store val
-$ML.EXIT
+                        ENDIF                                        ;pin set end
                         MEND                                         ;macro end
 ;;=============================macro for gpio set end========================================;; 
 
@@ -303,14 +302,12 @@ $ML.EXIT
 
 ;;===========================macro for gpio clear starting===================================;; 
                         MACRO                                        ;macro start
-                        MACRO_GPIO_CLEAR  $ML                        ;macro name
-                        ;if debug disabled, skip
-                        MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
-                        BEQ        $ML.EXIT                          ;jump to exit
+                        MACRO_GPIO_CLEAR                             ;macro name
+                        IF         DEF_DBG_GPIO_TICK_EN == 0x01      ;if debug enabled
                         LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
                         LDR        R1,   =DEF_DBG_BSRR_BR_VAL        ;load bit clear val
                         STR        R1,   [R0]                        ;store val
-$ML.EXIT
+                        ENDIF                                        ;pin clear end
                         MEND                                         ;macro end
 ;;=============================macro for gpio clear end======================================;; 
 
@@ -442,58 +439,18 @@ $ML.EXIT
 
 
 
-;;===========================macro for pushing R4-R11 starting===============================;; 
-                        MACRO                                        ;macro start
-                        MACRO_PUSH_R4_R11                            ;macro name
-                        MRS        R0,   PSP                         ;load PSP in R0
-                        SUBS       R0,   #32                         ;subtract 32 bytes
-                        STR        R4,   [R0, #0]                    ;load data
-                        STR        R5,   [R0, #4]                    ;load data
-                        STR        R6,   [R0, #8]                    ;load data
-                        STR        R7,   [R0, #12]                   ;load data
-                        MOV        R1,   R8                          ;copy
-                        STR        R1,   [R0, #16]                   ;load data
-                        MOV        R1,   R9                          ;copy
-                        STR        R1,   [R0, #20]                   ;load data
-                        MOV        R1,   R10                         ;copy
-                        STR        R1,   [R0, #24]                   ;load data
-                        MOV        R1,   R11                         ;copy
-                        STR        R1,   [R0, #28]                   ;load data
-                        MEND                                         ;macro end
-;;============================macro for pushing R4-R11 end===================================;; 
-
-
-
-
-
-;;===========================macro for popping R4-R11 starting===============================;; 
-                        MACRO                                        ;macro start
-                        MACRO_POP_R11_R4                             ;macro name
-                        LDR        R4,   [R0, #0]                    ;load data
-                        LDR        R5,   [R0, #4]                    ;load data
-                        LDR        R6,   [R0, #8]                    ;load data
-                        LDR        R7,   [R0, #12]                   ;load data
-                        LDR        R1,   [R0, #16]                   ;load data
-                        MOV        R8,   R1                          ;copy
-                        LDR        R1,   [R0, #20]                   ;load data
-                        MOV        R9,   R1                          ;copy
-                        LDR        R1,   [R0, #24]                   ;load data
-                        MOV        R10,  R1                          ;copy
-                        LDR        R1,   [R0, #28]                   ;load data
-                        MOV        R11,  R1                          ;copy
-                        ADDS       R0,   #32                         ;add 32 bytes
-                        MSR        PSP,  R0                          ;update new top of stack
-                        MEND                                         ;macro end
-;;==============================macro for popping R4-R11 end=================================;; 
-
-
-
-
-
 ;;=============================macro for context save starting===============================;; 
                         MACRO                                        ;macro start
                         MACRO_CONTEXT_SAVE                           ;macro name
-                        MACRO_PUSH_R4_R11                            ;push R4-R11, R0 Stk top
+                        MRS        R0,   PSP                         ;load PSP in R0
+                        SUBS       R0,   #32                         ;subtract 32 bytes
+						STMIA      R0!,  {R4-R7}                     ;store R4-R7
+						MOV        R4,   R8                          ;copy R8
+						MOV        R5,   R9                          ;copy R9
+						MOV        R6,   R10                         ;copy R10
+						MOV        R7,   R11                         ;copy R11
+						STMIA      R0!,  {R4-R7}                     ;store R8-R11
+						SUBS       R0,   #32                         ;subtract 32 bytes
                         LDR        R1,   =KER_THREAD_CB              ;R1 ThrdCB base        [R]
                         LDR        R2,   =KER_SYS_VARS               ;R2 SysVars base       [R]
                         LDR        R3,   [R2, #16]                   ;R3 SysVarsYield       [R]
@@ -512,8 +469,17 @@ $ML.EXIT
                         MACRO_CONTEXT_RESTORE                        ;macro name
                         LDR        R4,   [R2, #4]                    ;load SysVarsCTID      [R]
                         LSLS       R4,   R4,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
-                        LDR        R0,   [R1, R4]                    ;load thread PSP
-                        MACRO_POP_R11_R4                             ;pop R11-R4 manually   [R]
+                        LDR        R0,   [R1, R4]                    ;load ThrdCBPSP top    [R]
+						ADDS       R0,   #16                         ;point R8-R11 slots
+						LDMIA      R0!,  {R4-R7}                     ;load R8-R11
+						MOV        R8,   R4                          ;copy R8
+						MOV        R9,   R5                          ;copy R8
+						MOV        R10,  R6                          ;copy R8
+						MOV        R11,  R7                          ;copy R8
+						SUBS       R0,   #32                         ;back to R4-R7 slots
+						LDMIA      R0!,  {R4-R7}                     ;load R4-R7
+						ADDS       R0,   #16                         ;skip R8-R11 slots
+                        MSR        PSP,  R0                          ;update new top of stack
                         MEND                                         ;macro end
 ;;==============================macro for context restore end================================;; 
 
@@ -694,15 +660,15 @@ PendSV_Handler
                         ;Hardware pushed (address wise, high->low) xPSR,PC,LR,R12,R3-R0
                         ;Software pushed (address wise, high->low) R11-R4
                         CPSID      I                                 ;disable interrupts
-                        MACRO_GPIO_SET          ISRLBL1              ;debug pin set
+                        MACRO_GPIO_SET                               ;debug pin set
                         MACRO_CONTEXT_SAVE                           ;save context
-                        MACRO_KER_RUN_SCHEDULER ISRLBL2              ;run scheduler, local label
-						MACRO_KER_SCHEDULER_EXC ISRLBL3              ;exception handler
-                        MACRO_TMR_UPDT          ISRLBL4              ;ss and seconds counter
-                        MACRO_CPU_USAGE         ISRLBL5              ;calculate cpu usage
+                        MACRO_KER_RUN_SCHEDULER ISRLBL1              ;run scheduler, local label
+						MACRO_KER_SCHEDULER_EXC ISRLBL2              ;exception handler
+                        MACRO_TMR_UPDT          ISRLBL3              ;ss and seconds counter
+                        MACRO_CPU_USAGE         ISRLBL4              ;calculate cpu usage
                         MACRO_CLR_YIELD                              ;clear yield flag
                         MACRO_CONTEXT_RESTORE                        ;restore context
-                        MACRO_GPIO_CLEAR        ISRLBL6              ;debug pin clear
+                        MACRO_GPIO_CLEAR                             ;debug pin clear
                         CPSIE      I                                 ;enable interrupt
                         BX         LR                                ;return from interrupt
 ;;================================pending service isr end====================================;; 
@@ -723,10 +689,9 @@ PendSV_Handler
 ;;==================================kernel init starting=====================================;; 
 Kernel_Init
                         PUSH       {R4, LR}                          ;push, 8 bytes alignment
-                        MACRO_GPIO_INIT         PLBL1                ;gpio init for debug
+                        MACRO_GPIO_INIT                              ;gpio init for debug
                         MACRO_SYS_VAR_INIT                           ;system variable init
-                        MACRO_64MHZ_PLL_CONFIG  PLBL2                ;config pll if enabled
-                        ;set PendSV as lowest priority interrupt
+                        MACRO_64MHZ_PLL_CONFIG  PLBL1                ;config pll if enabled
                         LDR        R0,   =DEF_SCB_SHPR3              ;load SHPR3 addr
                         LDR        R1,   [R0]                        ;load SHPR3 val
                         LDR        R2,   =0xFF<<16                   ;set lowest priority
@@ -938,12 +903,12 @@ Kernel_Atomic_End
 ;;==========================kernel tick 64bit SS val get starting============================;;   
 Kernel_Tick_SubSeconds_Get
                         LDR        R3,   =KER_SYS_VARS               ;load SysVars addr
-KER_TICK64_RETRY                                                     ;retry label
+KER_TICK_SS64_RETRY                                                  ;retry label
                         LDR        R1,   [R3, #36]                   ;load SysVarsTmrSS64H
                         LDR        R0,   [R3, #32]                   ;load SysVarsTmrSS64L
                         LDR        R2,   [R3, #36]                   ;load SysVarsTmrSS64H
                         CMP        R1,   R2                          ;changed during the read?
-                        BNE        KER_TICK64_RETRY                  ;SysVarsTmrSS64H diff, rty
+                        BNE        KER_TICK_SS64_RETRY               ;SysVarsTmrSS64H diff, rty
                         BX         LR                                ;return
 ;;============================kernel tick 64bit SS val get end===============================;; 
 
