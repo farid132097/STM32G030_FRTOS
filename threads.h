@@ -6,16 +6,16 @@
 
 
 
-void    THREAD_SysSVC(void);
-void    THREAD_Thread1(void);
-void    THREAD_Thread2(void);
-void    THREAD_Thread3(void);
-void    THREAD_Thread4(void);
-void    THREAD_Thread5(void);
-void    THREAD_Thread6(void);
-void    THREAD_Thread7(void);
-void    THREAD_Thread8(void);
-void    THREAD_Thread9(void);
+void    THREAD1_SysSVC(void);
+void    THREAD2_Thread(void);
+void    THREAD3_Thread(void);
+void    THREAD4_Thread(void);
+void    THREAD5_Thread(void);
+void    THREAD6_Thread(void);
+void    THREAD7_Thread(void);
+void    THREAD8_Thread(void);
+void    THREAD9_Thread(void);
+void    THREAD10_Thread(void);
 
 
 

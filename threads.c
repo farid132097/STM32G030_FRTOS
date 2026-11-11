@@ -5,23 +5,40 @@
 #include "threads.h"
 #include "debug.h"
 #include "gpio.h"
+#include "wdt.h"
 
 uint8_t comp1 = 1, comp2 = 1;
 
 __attribute__((noreturn)) 
-void THREAD_SysSVC(void)
+void THREAD1_SysSVC(void)
 {
 	Debug_Init(115200);
+	Debug_Tx_NL();
+	Debug_Tx_Parameter_Hex_NL("SysRst", RCC->CSR);
+	RCC->CSR |= RCC_CSR_RMVF;
+	WDT_Init(2000);
+	WDT_Reload();
 	
-	//add watchdog
-	//add thread heartbeat checker
-	//add thread progress notifier
-	//add system health checker
+	
 	
 	while(1)
 	{
 		
-		Debug_Tx_Text_NL("SysSVC");
+		
+		if(Kernel_Thread_Health_Check())
+		{
+			WDT_Reload();
+			Debug_Tx_Parameter_NL("Thrd2", Kernel_Thread_Health_Get(2));
+			Debug_Tx_Parameter_NL("Thrd3", Kernel_Thread_Health_Get(3));
+			Debug_Tx_Parameter_NL("Thrd4", Kernel_Thread_Health_Get(4));
+			Debug_Tx_Parameter_NL("Thrd5", Kernel_Thread_Health_Get(5));
+			Debug_Tx_Parameter_NL("Thrd6", Kernel_Thread_Health_Get(6));
+			Debug_Tx_Parameter_NL("Thrd7", Kernel_Thread_Health_Get(7));
+			Debug_Tx_Parameter_NL("Thrd8", Kernel_Thread_Health_Get(8));
+			Debug_Tx_Parameter_NL("Thrd9", Kernel_Thread_Health_Get(9));
+			Debug_Tx_Parameter_NL("Thrd10", Kernel_Thread_Health_Get(10));
+		}
+		
 		Kernel_Thread_Sleep(1000);
 		
 	}
@@ -30,29 +47,10 @@ void THREAD_SysSVC(void)
 
 
 __attribute__((noreturn)) 
-void THREAD_Thread1(void)
+void THREAD2_Thread(void)
 {
 	
-	
-	while(1)
-	{
-		
-		Kernel_Atomic_Start();
-		Debug_Tx_Text_NL("Thrd1");
-		Kernel_Atomic_End();
-		
-		Kernel_Thread_Sleep(200);
-		
-	}
-}
-
-
-
-__attribute__((noreturn)) 
-void THREAD_Thread2(void)
-{
-	
-	
+	Kernel_Thread_Health_Set(1000, 10);
 	
 	while(1)
 	{
@@ -61,7 +59,8 @@ void THREAD_Thread2(void)
 		Debug_Tx_Text_NL("Thrd2");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(202);
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(2000);
 		
 	}
 }
@@ -69,10 +68,10 @@ void THREAD_Thread2(void)
 
 
 __attribute__((noreturn)) 
-void THREAD_Thread3(void)
+void THREAD3_Thread(void)
 {
 	
-	
+	Kernel_Thread_Health_Set(1000, 10);
 	
 	while(1)
 	{
@@ -81,7 +80,8 @@ void THREAD_Thread3(void)
 		Debug_Tx_Text_NL("Thrd3");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(205);
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(202);
 		
 	}
 }
@@ -89,8 +89,10 @@ void THREAD_Thread3(void)
 
 
 __attribute__((noreturn)) 
-void THREAD_Thread4(void)
+void THREAD4_Thread(void)
 {
+	
+	Kernel_Thread_Health_Set(1000, 10);
 	
 	while(1)
 	{
@@ -99,7 +101,8 @@ void THREAD_Thread4(void)
 		Debug_Tx_Text_NL("Thrd4");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(430);
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(205);
 		
 	}
 }
@@ -107,8 +110,10 @@ void THREAD_Thread4(void)
 
 
 __attribute__((noreturn)) 
-void THREAD_Thread5(void)
+void THREAD5_Thread(void)
 {
+	
+	Kernel_Thread_Health_Set(1000, 10);
 	
 	while(1)
 	{
@@ -117,7 +122,8 @@ void THREAD_Thread5(void)
 		Debug_Tx_Text_NL("Thrd5");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(540);
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(430);
 		
 	}
 }
@@ -125,9 +131,10 @@ void THREAD_Thread5(void)
 
 
 __attribute__((noreturn)) 
-void THREAD_Thread6(void)
+void THREAD6_Thread(void)
 {
 	
+	Kernel_Thread_Health_Set(1000, 10);
 	
 	while(1)
 	{
@@ -136,7 +143,8 @@ void THREAD_Thread6(void)
 		Debug_Tx_Text_NL("Thrd6");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(650);
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(540);
 		
 	}
 }
@@ -144,9 +152,10 @@ void THREAD_Thread6(void)
 
 
 __attribute__((noreturn)) 
-void THREAD_Thread7(void)
+void THREAD7_Thread(void)
 {
 	
+	Kernel_Thread_Health_Set(1000, 10);
 	
 	while(1)
 	{
@@ -155,7 +164,8 @@ void THREAD_Thread7(void)
 		Debug_Tx_Text_NL("Thrd7");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(760);
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(650);
 		
 	}
 }
@@ -163,9 +173,10 @@ void THREAD_Thread7(void)
 
 
 __attribute__((noreturn)) 
-void THREAD_Thread8(void)
+void THREAD8_Thread(void)
 {
 	
+	Kernel_Thread_Health_Set(1500, 10);
 	
 	while(1)
 	{
@@ -174,7 +185,8 @@ void THREAD_Thread8(void)
 		Debug_Tx_Text_NL("Thrd8");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(870);
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(760);
 		
 	}
 }
@@ -182,9 +194,10 @@ void THREAD_Thread8(void)
 
 
 __attribute__((noreturn)) 
-void THREAD_Thread9(void)
+void THREAD9_Thread(void)
 {
 	
+	Kernel_Thread_Health_Set(1500, 10);
 	
 	while(1)
 	{
@@ -193,7 +206,29 @@ void THREAD_Thread9(void)
 		Debug_Tx_Text_NL("Thrd9");
 		Kernel_Atomic_End();
 		
-		Kernel_Thread_Sleep(980);
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(870);
+		
+	}
+}
+
+
+
+__attribute__((noreturn)) 
+void THREAD10_Thread(void)
+{
+	
+	Kernel_Thread_Health_Set(1000, 10);
+	
+	while(1)
+	{
+		
+		Kernel_Atomic_Start();
+		Debug_Tx_Text_NL("Thrd10");
+		Kernel_Atomic_End();
+		
+		Kernel_Thread_Heartbeat();
+		Kernel_Thread_Sleep(5020);
 		
 	}
 }

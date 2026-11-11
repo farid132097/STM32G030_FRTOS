@@ -7,9 +7,9 @@
  * Source        : https://github.com/farid132097/STM32G030_FRTOS
  * Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  * Created       : Sep 02, 2025, 09:30 PM
- * Last Modified : Nov 02, 2026, 11:15 PM
+ * Last Modified : Nov 11, 2026, 02:42 PM
  *
-*/
+ */
 
 
 
@@ -26,6 +26,9 @@ void     Kernel_Thread_Create(void (*fptr)(void), int8_t prio);
 void     Kernel_Thread_Idle(void);
 void     Kernel_Thread_Sleep(uint32_t val);
 void     Kernel_Thread_Heartbeat(void);
+void     Kernel_Thread_Health_Set(uint32_t tout, uint32_t health);
+uint8_t  Kernel_Thread_Health_Get(uint8_t thread_id);
+uint8_t  Kernel_Thread_Health_Check(void);
 void     Kernel_Thread_Run_All(void);
 void     Kernel_Atomic_Start(void);
 void     Kernel_Atomic_End(void);
