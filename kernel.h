@@ -22,8 +22,7 @@
 
 
 void     Kernel_Init(void);
-void     Kernel_Thread_Create(void (*fptr)(void), int8_t prio);
-void     Kernel_Thread_Idle(void);
+uint8_t  Kernel_Thread_Create(void (*fptr)(void), int8_t prio);
 void     Kernel_Thread_Sleep(uint32_t val);
 void     Kernel_Thread_Heartbeat(void);
 void     Kernel_Thread_Health_Set(uint32_t tout, uint32_t health);
@@ -35,7 +34,7 @@ void     Kernel_Atomic_End(void);
 uint64_t Kernel_Tick_SubSeconds_Get(void);
 uint32_t Kernel_Tick_Seconds_Get(void);
 void     Kernel_Timeout_Set(uint32_t val);
-uint8_t  Kernel_Timeout_Status(void);
+uint8_t  Kernel_Timeout_Status_Get(void);
 uint8_t  Kernel_CPU_Usage_Get(void);
 uint8_t  Kernel_Version_Major_Get(void);
 uint8_t  Kernel_Version_Minor_Get(void);

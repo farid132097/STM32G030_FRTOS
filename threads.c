@@ -7,7 +7,6 @@
 #include "gpio.h"
 #include "wdt.h"
 
-uint8_t comp1 = 1, comp2 = 1;
 
 __attribute__((noreturn)) 
 void THREAD1_SysSVC(void)
