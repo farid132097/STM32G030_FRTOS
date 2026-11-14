@@ -7,7 +7,7 @@
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Nov 11, 2026, 02:42 PM
+ ; Last Modified : Nov 14, 2026, 02:42 PM
 
 
 
@@ -46,9 +46,9 @@ DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number
 
 ;;==============================kernel system config starting================================;; 
 DEF_KER_STK_SZ          EQU        0x00000180                        ;stack size for each thread
-DEF_KER_TCB_SZ          EQU        0x00000040                        ;thread control block size
+DEF_KER_TCB_SZ          EQU        0x00000020                        ;thread control block size
 DEF_KER_ERR_LOG_SZ      EQU        0x00000020                        ;total error log size
-DEF_KER_TCB_LSFT        EQU        0x00000006                        ;TCB sz = (1 << LSFT)
+DEF_KER_TCB_LSFT        EQU        0x00000005                        ;TCB sz = (1 << LSFT)
 ;;=================================kernel system config end==================================;; 
 
 
@@ -138,32 +138,31 @@ DEF_KER_STK_SPC         EQU        DEF_KER_SYS_THRD * DEF_KER_STK_SZ ;max stack 
 
 ;;===================================define offsets starting=================================;; 
 DEF_TB_OFF_PRIO         EQU        0x00                              ;Prio offset from TCB   
-DEF_TB_OFF_STS          EQU        0x04                              ;status offset from TCB   
-DEF_TB_OFF_HLTH         EQU        0x08                              ;health offset from TCB   
-DEF_TB_OFF_HLTHS        EQU        0x0C                              ;health sts offset from TCB
-DEF_TB_OFF_PSP          EQU        0x10                              ;PSP offset from TCB   
-DEF_TB_OFF_SLP          EQU        0x14                              ;sleep offset from TCB   
-DEF_TB_OFF_TOUT         EQU        0x18                              ;timeout val offset from TCB
-DEF_TB_OFF_TSTMPL       EQU        0x1C                              ;timestamp offset from TCB   
-DEF_TB_OFF_TSTMPH       EQU        0x20                              ;timestamp offset from TCB  
-DEF_TB_OFF_HBCNT        EQU        0x24                              ;Heartbeat offset from TCB   
-DEF_TB_OFF_WDT          EQU        0x28                              ;watchdog offset from TCB   
-
+DEF_TB_OFF_STS          EQU        0x01                              ;status offset from TCB   
+DEF_TB_OFF_HLTH         EQU        0x02                              ;health offset from TCB   
+DEF_TB_OFF_HLTHS        EQU        0x03                              ;health sts offset from TCB
+DEF_TB_OFF_PSP          EQU        0x04                              ;PSP offset from TCB   
+DEF_TB_OFF_SLP          EQU        0x08                              ;sleep offset from TCB   
+DEF_TB_OFF_TOUT         EQU        0x0C                              ;timeout val offset from TCB
+DEF_TB_OFF_TSTMPL       EQU        0x10                              ;timestamp offset from TCB   
+DEF_TB_OFF_TSTMPH       EQU        0x14                              ;timestamp offset from TCB  
+DEF_TB_OFF_HBCNT        EQU        0x18                              ;Heartbeat offset from TCB   
+DEF_TB_OFF_WDT          EQU        0x1C                              ;watchdog offset from TCB   
 DEF_SV_OFF_TCNT         EQU        0x00                              ;thread cnt offset from SV   
 DEF_SV_OFF_CTID         EQU        0x04                              ;curr tid offset from SV  
-DEF_SV_OFF_YIELD        EQU        0x10                              ;yield offset from SV  
-DEF_SV_OFF_TMRSS64L     EQU        0x20                              ;ss64 offset from SV  
-DEF_SV_OFF_TMRSS64H     EQU        0x24                              ;ss64 offset from SV  
-DEF_SV_OFF_TMRSS32      EQU        0x28                              ;ss32 offset from SV  
-DEF_SV_OFF_TMRS32       EQU        0x2C                              ;s32 offset from SV  
-DEF_SV_OFF_TOTTK        EQU        0x30                              ;tot tick offset from SV  
-DEF_SV_OFF_ACTTK        EQU        0x34                              ;act tick offset from SV  
-DEF_SV_OFF_USG          EQU        0x38                              ;cpu usg offset from SV  
-DEF_SV_OFF_USGAVG       EQU        0x3C                              ;cpu usg avg offset from SV  
-DEF_SV_OFF_STKRLD       EQU        0x40                              ;stk reload offset from SV  
-DEF_SV_OFF_ATOP         EQU        0x44                              ;atomic op offset from SV  
-DEF_SV_OFF_ATOPTID      EQU        0x48                              ;atomic op tid offset from SV  
-DEF_SV_OFF_HLTHOK       EQU        0x4C                              ;health ok offset from SV  
+DEF_SV_OFF_YIELD        EQU        0x08                              ;yield offset from SV  
+DEF_SV_OFF_TMRSS64L     EQU        0x0C                              ;ss64 offset from SV  
+DEF_SV_OFF_TMRSS64H     EQU        0x10                              ;ss64 offset from SV  
+DEF_SV_OFF_TMRSS32      EQU        0x14                              ;ss32 offset from SV  
+DEF_SV_OFF_TMRS32       EQU        0x18                              ;s32 offset from SV  
+DEF_SV_OFF_TOTTK        EQU        0x1C                              ;tot tick offset from SV  
+DEF_SV_OFF_ACTTK        EQU        0x20                              ;act tick offset from SV  
+DEF_SV_OFF_USG          EQU        0x24                              ;cpu usg offset from SV  
+DEF_SV_OFF_USGAVG       EQU        0x28                              ;cpu usg avg offset from SV  
+DEF_SV_OFF_STKRLD       EQU        0x2C                              ;stk reload offset from SV  
+DEF_SV_OFF_ATOP         EQU        0x30                              ;atomic op offset from SV  
+DEF_SV_OFF_ATOPTID      EQU        0x34                              ;atomic op tid offset from SV  
+DEF_SV_OFF_HLTHOK       EQU        0x38                              ;health ok offset from SV  
 ;;======================================define offsets end===================================;; 
 
 
@@ -204,14 +203,13 @@ THREAD_STS_EXECUTING    EQU        0x04                              ;executing 
 ;only 3 base addresses will be used to make it easy to load and store with immediate
 ;fields under the bases are described bellow, offsets are inside braces (byte offset)
 ;ThrdSTK : stack space for all threads including idle thread, idle thread id is 0
-;ThrdCB  : ThrdCBPSP(0), ThrdCBPrio(4), ThrdCBSts(8), ThrdCBSlp(12), ThrdCBToutL:H(16, 20)
-;ThrdCB  : ThrdCBTStmpL:H(24, 28), ThrdCBHbCnt(32), ThrdCBWdt(36),ThrdCBHlth(40),
-;ThrdCB  : ThrdCBHlthSet(44), Reserved(48-63)
-;SysVars : SysVarsTCnt(0), SysVarsCTID(4), SysVarsHiPrio(8), SysVarsPrioTID(12)
-;SysVars : SysVarsYield(16), SysVarsLST(20), SysVarsNxtWkupL:H(24, 28)
-;SysVars : SysVarsTmrSS64L:H(32, 36), SysVarsTmrSS32(40), SysVarsTmrS(44), SysVarsUsgTotTick(48)
-;SysVars : SysVarsUsgActTick(52), SysVarsUsg(56), SysVarsUsgAvg(60), SysVarsSystkRld(64)
-;SysVars : SysVarsAtmOp(68) SysVarsAtmOpTID(72) SysVarsHlthOk(76)
+;ThrdCB  : ThrdCBPrio(0), ThrdCBSts(1), ThrdCBHlth(2), ThrdCBHlthSet(3), ThrdCBPSP(4),
+;ThrdCB  : ThrdCBSlp(8), ThrdCBTout(12), ThrdCBTStmpL:H(16, 20), ThrdCBHbCnt(24),
+;ThrdCB  : ThrdCBWdt(28), TCB size is 32 bytes, first 4 fields are 1 byte wide
+;SysVars : SysVarsTCnt(0), SysVarsCTID(4), SysVarsYield(8), SysVarsTmrSS64L:H(12, 16),
+;SysVars : SysVarsTmrSS32(20), SysVarsTmrS(24), SysVarsUsgTotTick(28), SysVarsUsgActTick(32),
+;SysVars : SysVarsUsg(36), SysVarsUsgAvg(40), SysVarsSystkRld(44), SysVarsAtmOp(48),
+;SysVars : SysVarsAtmOpTID(52), SysVarsHlthOk(56), 60 bytes used (see KER_SYS_VARS size)
 ;ErrLogs : ErrLogsTID(0) + ErrLogsEID(1), ErrLogsTID(2) + ErrLogsEID(3)....
 KER_THREAD_STK          SPACE      DEF_KER_STK_SPC                   ;thread stack space
 KER_THREAD_CB           SPACE      DEF_KER_TCB_SZ * DEF_KER_SYS_THRD ;thread control block
@@ -545,7 +543,8 @@ $ML.LOOP                                                             ;loop start
                         STR        R7,   [R6, #DEF_TB_OFF_SLP]       ;store ThrdCBSlp
                         BNE        $ML.TNEXT                         ;still sleeping
 $ML.TREADY                                                           ;thread is ready
-                        LDR        R7,   [R6, #DEF_TB_OFF_PRIO]      ;load ThrdCBPrio
+                        LDRB       R7,   [R6, #DEF_TB_OFF_PRIO]      ;load ThrdCBPrio
+                        SXTB       R7,   R7                          ;sign-extend to int32
                         CMP        R7,   R4                          ;compare with best
                         BGE        $ML.TNEXT                         ;not better, skip
                         MOVS       R4,   R7                          ;new best prio
@@ -802,10 +801,9 @@ KER_TCNT_OK                                                          ;jmp poin t
                         LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
                         ADDS       R3,   R3, R0                      ;TCB address
                         STR        R2,   [R3, #DEF_TB_OFF_PSP]       ;store ThrdCBPSP
-                        SXTB       R1,   R1                          ;produce 2's complement
-                        STR        R1,   [R3, #DEF_TB_OFF_PRIO]      ;store ThrdCBPrio
+                        STRB       R1,   [R3, #DEF_TB_OFF_PRIO]      ;store ThrdCBPrio
                         MOVS       R1,   #THREAD_STS_READY           ;set flag
-                        STR        R1,   [R3, #DEF_TB_OFF_STS]       ;store ThrdCBSts
+                        STRB       R1,   [R3, #DEF_TB_OFF_STS]       ;store ThrdCBSts
                         MOVS       R0,   #0                          ;clear reg
                         STR        R0,   [R3, #DEF_TB_OFF_SLP]       ;store ThrdCBSlp
                         STR        R0,   [R3, #DEF_TB_OFF_TOUT]      ;store ThrdCBTout
@@ -813,8 +811,8 @@ KER_TCNT_OK                                                          ;jmp poin t
                         STR        R0,   [R3, #DEF_TB_OFF_TSTMPH]    ;store ThrdCBTStmpH
                         STR        R0,   [R3, #DEF_TB_OFF_HBCNT]     ;store ThrdCBHbCnt
                         STR        R0,   [R3, #DEF_TB_OFF_WDT]       ;store ThrdCBWdt
-                        STR        R0,   [R3, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
-                        STR        R0,   [R3, #DEF_TB_OFF_HLTHS]     ;store ThrdCBHlthSet
+                        STRB       R0,   [R3, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
+                        STRB       R0,   [R3, #DEF_TB_OFF_HLTHS]     ;store ThrdCBHlthSet
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R1,   [R0, #DEF_SV_OFF_TCNT]      ;load SysVarsTCnt
                         ADDS       R1,   R1, #1                      ;increment SysVarsTCnt
@@ -857,7 +855,7 @@ Kernel_Thread_Sleep
                         CPSID      I                                 ;disable interrupts
                         STR        R0,   [R2, #DEF_TB_OFF_SLP]       ;store ThrdCBSlp
                         MOVS       R0,   #THREAD_STS_BLOCKED         ;set status blocked
-                        STR        R0,   [R2, #DEF_TB_OFF_STS]       ;store ThrdCBSts
+                        STRB       R0,   [R2, #DEF_TB_OFF_STS]       ;store ThrdCBSts
                         MOVS       R0,   #0x01                       ;set flag
                         STR        R0,   [R1, #DEF_SV_OFF_YIELD]     ;store SysVarsYields
                         LDR        R0,   =DEF_SCB_ICSR               ;load SCB->ICSR addr
@@ -899,8 +897,6 @@ Kernel_Thread_Heartbeat
 
 ;;=================================start threads starting====================================;; 
 Kernel_Thread_Run_All
-                        ;configure SysTick timer
-                        MACRO_SYSTICK_CONFIG                         ;configure systick
                         ;calculate stack top for this thread
                         LDR        R0,   =DEF_KER_STK_SZ             ;load each stack size
                         LDR        R1,   =KER_THREAD_STK             ;stack base
@@ -912,6 +908,7 @@ Kernel_Thread_Run_All
                         ORRS       R1,   R1, R2                      ;CONTROL.SPSEL = 1
                         MSR        CONTROL, R1                       ;switch to PSP
                         ISB                                          ;instruction barrier
+                        MACRO_SYSTICK_CONFIG                         ;configure systick
                         B          Kernel_Thread_Idle                ;call a thread
 ;;====================================start threads end======================================;; 
 
@@ -990,8 +987,8 @@ Kernel_Thread_Health_Set
                         MRS        R6,   PRIMASK                     ;store interrupt state
                         CPSID      I                                 ;disable interrupts
                         STR        R4,   [R2, #DEF_TB_OFF_WDT]       ;store ThrdCBWdt
-                        STR        R5,   [R2, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
-                        STR        R3,   [R2, #DEF_TB_OFF_HLTHS]     ;store ThrdCBHlthSet
+                        STRB       R5,   [R2, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
+                        STRB       R3,   [R2, #DEF_TB_OFF_HLTHS]     ;store ThrdCBHlthSet
                         MSR        PRIMASK, R6                       ;restore interrupt
                         POP        {R4, R5, R6, PC}                  ;return
 ;;=============================kernel thread health set end==================================;; 
@@ -1005,7 +1002,7 @@ Kernel_Thread_Health_Get
                         LDR        R1,   =KER_THREAD_CB              ;load ThrdCB addr
                         LSLS       R0,   R0, #DEF_KER_TCB_LSFT       ;multiply by TCB size
                         ADDS       R0,   R1, R0                      ;base + offset
-                        LDR        R0,   [R0, #DEF_TB_OFF_HLTH]      ;load ThrdCBHlth
+                        LDRB       R0,   [R0, #DEF_TB_OFF_HLTH]      ;load ThrdCBHlth
                         BX         LR                                ;return
 ;;=============================kernel thread health get end==================================;; 
 
@@ -1024,7 +1021,7 @@ KER_HLTH_CHK_LOOP
                         MOVS       R4,   R0                          ;copy val
                         LSLS       R4,   R4,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
                         ADDS       R4,   R4, R1                      ;base + offset
-                        LDR        R5,   [R4, #DEF_TB_OFF_HLTHS]     ;load ThrdCBTHlthSet
+                        LDRB       R5,   [R4, #DEF_TB_OFF_HLTHS]     ;load ThrdCBTHlthSet
                         TST        R5,   R5                          ;check if 0
                         BEQ        KER_THRD_HLTH_NEXT                ;skip 
                         LDR        R5,   [R4, #DEF_TB_OFF_TSTMPL]    ;load ThrdCBTStampL
@@ -1032,11 +1029,11 @@ KER_HLTH_CHK_LOOP
                         LDR        R6,   [R4, #DEF_TB_OFF_WDT]       ;load ThrdCBWdt
                         CMP        R5,   R6                          ;compare with ThrdCBWdt
                         BLS        KER_THRD_HLTH_NEXT                ;no need to update flags
-                        LDR        R5,   [R4, #DEF_TB_OFF_HLTH]      ;load ThrdCBHlth
+                        LDRB       R5,   [R4, #DEF_TB_OFF_HLTH]      ;load ThrdCBHlth
                         TST        R5,   R5                          ;check if 0
                         BEQ        KER_THRD_HLTH_NULL                ;health is 0
                         SUBS       R5,   R5,  #1                     ;decrease
-                        STR        R5,   [R4, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
+                        STRB       R5,   [R4, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
                         BNE        KER_THRD_HLTH_NEXT                ;jmp to next iteration   
 KER_THRD_HLTH_NULL
                         MOVS       R4,   #0x00                       ;clear flag
