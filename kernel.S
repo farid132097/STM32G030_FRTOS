@@ -35,7 +35,7 @@ DEF_KERNEL_VER_MINOR    EQU        0x00000000                        ;set kernel
 DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel version patch
 DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz
 DEF_KER_MAX_THREADS     EQU        0x0000000B                        ;number of maximum threads
-DEF_DBG_GPIO_TICK_EN    EQU        0x00000000                        ;enable/disable gpio toggle
+DEF_DBG_GPIO_TICK_EN    EQU        0x00000001                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT       EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
 DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number, value 00-0fh
 ;;====================================kernel config end======================================;;
@@ -137,17 +137,18 @@ DEF_KER_STK_SPC         EQU        DEF_KER_SYS_THRD * DEF_KER_STK_SZ ;max stack 
 
 
 ;;===================================define offsets starting=================================;; 
-DEF_TB_OFF_PSP          EQU        0x00                              ;PSP offset from TCB   
-DEF_TB_OFF_PRIO         EQU        0x04                              ;Prio offset from TCB   
-DEF_TB_OFF_STS          EQU        0x08                              ;status offset from TCB   
-DEF_TB_OFF_SLP          EQU        0x0C                              ;sleep offset from TCB   
-DEF_TB_OFF_TOUT         EQU        0x10                              ;timeout offset from TCB   
-DEF_TB_OFF_TSTMPL       EQU        0x18                              ;timestamp offset from TCB    
-DEF_TB_OFF_TSTMPH       EQU        0x1C                              ;timestamp offset from TCB  
-DEF_TB_OFF_HBCNT        EQU        0x20                              ;Heartbeat offset from TCB   
-DEF_TB_OFF_WDT          EQU        0x24                              ;watchdog offset from TCB   
-DEF_TB_OFF_HLTH         EQU        0x28                              ;health offset from TCB   
-DEF_TB_OFF_HLTHS        EQU        0x2C                              ;health sts offset from TCB
+DEF_TB_OFF_PRIO         EQU        0x00                              ;Prio offset from TCB   
+DEF_TB_OFF_STS          EQU        0x04                              ;status offset from TCB   
+DEF_TB_OFF_HLTH         EQU        0x08                              ;health offset from TCB   
+DEF_TB_OFF_HLTHS        EQU        0x0C                              ;health sts offset from TCB
+DEF_TB_OFF_PSP          EQU        0x10                              ;PSP offset from TCB   
+DEF_TB_OFF_SLP          EQU        0x14                              ;sleep offset from TCB   
+DEF_TB_OFF_TOUT         EQU        0x18                              ;timeout val offset from TCB
+DEF_TB_OFF_TSTMPL       EQU        0x1C                              ;timestamp offset from TCB   
+DEF_TB_OFF_TSTMPH       EQU        0x20                              ;timestamp offset from TCB  
+DEF_TB_OFF_HBCNT        EQU        0x24                              ;Heartbeat offset from TCB   
+DEF_TB_OFF_WDT          EQU        0x28                              ;watchdog offset from TCB   
+
 DEF_SV_OFF_TCNT         EQU        0x00                              ;thread cnt offset from SV   
 DEF_SV_OFF_CTID         EQU        0x04                              ;curr tid offset from SV  
 DEF_SV_OFF_YIELD        EQU        0x10                              ;yield offset from SV  
@@ -411,7 +412,7 @@ $ML.PLLLOCK
                         LDR        R2,   =0x02000000                 ;bit 25, PLLRDY
                         ANDS       R1,   R2                          ;check bit
                         BEQ        $ML.PLLLOCK                       ;wait until locked
-$ML.SWPLLRSW           
+$ML.SWPLLRSW            
                         LDR        R0,   =DEF_RCC_CFGR               ;load addr
                         LDR        R1,   [R0]                        ;load val
                         MOVS       R2,   #0x07                       ;set bit0-2
@@ -752,10 +753,13 @@ Kernel_Init
 
 ;;=================================thread create starting====================================;; 
 Kernel_Thread_Create
+                        CMP        R0,   #0                          ;check null val
+                        BEQ        KER_FPTR_NULL                     ;null function pointer
                         LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R2,   [R2, #DEF_SV_OFF_TCNT]      ;current thread count
-                        CMP        R2,   #DEF_KER_SYS_THRD           ;12 slots incl. idle
+                        CMP        R2,   #DEF_KER_SYS_THRD           ;slots incl. idle
                         BLO        KER_TCNT_OK                       ;jump to thread create
+KER_FPTR_NULL                                                        ;return from this func
                         MOVS       R0,   #0                          ;set 0 (failed)
                         BX         LR                                ;return
 KER_TCNT_OK                                                          ;jmp poin tcnt ok
@@ -1052,6 +1056,7 @@ KER_THRD_HLTH_NEXT
 
 ;;==============================kernel timeout set starting==================================;; 
 Kernel_Timeout_Set
+                        UXTH       R0,   R0                          ;make only 16 bit
                         LDR        R1,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R2,   [R1, #DEF_SV_OFF_TMRSS64L]  ;current time
                         ADDS       R2,   R2, R0                      ;deadline = now + tout

@@ -33,7 +33,7 @@ void     Kernel_Atomic_Start(void);
 void     Kernel_Atomic_End(void);
 uint64_t Kernel_Tick_SubSeconds_Get(void);
 uint32_t Kernel_Tick_Seconds_Get(void);
-void     Kernel_Timeout_Set(uint32_t val);
+void     Kernel_Timeout_Set(uint16_t val);
 uint8_t  Kernel_Timeout_Status_Get(void);
 uint8_t  Kernel_CPU_Usage_Get(void);
 uint8_t  Kernel_Version_Major_Get(void);
