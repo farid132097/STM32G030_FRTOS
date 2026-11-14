@@ -10,7 +10,7 @@
       <TargetName>STM32G030F6P6</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>6240000::V6.24::ARMCLANG</pCCUsed>
+      <pCCUsed>6220000::V6.22::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -409,6 +409,11 @@
               <FileType>5</FileType>
               <FilePath>.\cdefs.h</FilePath>
             </File>
+            <File>
+              <FileName>wdt.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\wdt.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -438,6 +443,11 @@
               <FileName>asm_test.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\asm_test.s</FilePath>
+            </File>
+            <File>
+              <FileName>wdt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\wdt.c</FilePath>
             </File>
           </Files>
         </Group>

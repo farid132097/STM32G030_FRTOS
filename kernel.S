@@ -2,42 +2,42 @@
  
  
  ; File          : kernel.s
- ; Author        : Md. Faridul Islam (faridmdislam@gmail.com)
+ ; Author        : MD. Faridul Islam (faridmdislam@gmail.com)
  ; Source        : https://github.com/farid132097/STM32G030_FRTOS
  ; Description   : ARM Cortex M0+ kernel for bare-metal RTOS
  ; Devices       : Tested on STM32G030F6P6
  ; Created       : Sep 02, 2025, 09:30 PM
- ; Last Modified : Nov 02, 2026, 11:15 PM
+ ; Last Modified : Nov 14, 2026, 05:00 PM
 
 
 
 
-;;=============================system type definition starting===============================;;
-                        THUMB                                        ;enable thumb mode        
-                        PRESERVE8                                    ;8 bytes stack alignment  
-;;===============================system type definition end==================================;;
-
-
-
-
-
-;;============================constant area definition starting==============================;;
-                        AREA       |.constdata|, DATA, READONLY                                
-;;==============================constant area definition end=================================;;
+;;=============================system type definition starting===============================;; 
+                        THUMB                                        ;enable thumb mode
+                        PRESERVE8                                    ;8 bytes stack alignment
+;;===============================system type definition end==================================;; 
 
 
 
 
 
-;;==================================kernel config starting===================================;;
-DEF_KERNEL_VER_MAJOR    EQU        0x00000002                        ;set kernel version major 
-DEF_KERNEL_VER_MINOR    EQU        0x00000001                        ;set kernel version minor 
-DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel version patch 
-DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz 
-DEF_KER_MAX_THREADS     EQU        0x00000006                        ;number of maximum threads
-DEF_DBG_GPIO_TICK_EN    EQU        0x00000001                        ;enable/disable gpio toggle
+;;============================constant area definition starting==============================;; 
+                        AREA       |.constdata|, DATA, READONLY
+;;==============================constant area definition end=================================;; 
+
+
+
+
+
+;;==================================kernel config starting===================================;; 
+DEF_KERNEL_VER_MAJOR    EQU        0x00000003                        ;set kernel version major
+DEF_KERNEL_VER_MINOR    EQU        0x00000000                        ;set kernel version minor
+DEF_KERNEL_VER_PATCH    EQU        0x00000000                        ;set kernel version patch
+DEF_64MHZ_PLL_ENABLE    EQU        0x00000001                        ;enable/disable PLL 64MHz
+DEF_KER_MAX_THREADS     EQU        0x0000000B                        ;number of maximum threads
+DEF_DBG_GPIO_TICK_EN    EQU        0x00000000                        ;enable/disable gpio toggle
 DEF_DBG_GPIO_PORT       EQU        0x00000000                        ;value 00-05h,00->A, 01->B..
-DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number, value 00-0fh 
+DEF_DBG_GPIO_PIN        EQU        0x00000003                        ;pin number, value 00-0fh
 DEF_INFO_BLOCK_SIZE     EQU        0x00000200                        ;info block size 512 bytes
 ;;====================================kernel config end======================================;;
 
@@ -45,26 +45,27 @@ DEF_INFO_BLOCK_SIZE     EQU        0x00000200                        ;info block
 
 
 
-;;==============================kernel system config starting================================;;
+;;==============================kernel system config starting================================;; 
 DEF_KER_STK_SZ          EQU        0x00000180                        ;stack size for each thread
-DEF_KER_TCB_SZ          EQU        0x00000040                        ;task control block size  
-DEF_KER_TCB_LSFT        EQU        0x00000006                        ;TCB sz = (1 << LSFT)     
-;;=================================kernel system config end==================================;;
+DEF_KER_TCB_SZ          EQU        0x00000020                        ;thread control block size
+DEF_KER_ERR_LOG_SZ      EQU        0x00000020                        ;total error log size
+DEF_KER_TCB_LSFT        EQU        0x00000005                        ;TCB sz = (1 << LSFT)
+;;=================================kernel system config end==================================;; 
 
 
 
 
 
-;;===============================define address bases starting===============================;;
+;;===============================define address bases starting===============================;; 
 DEF_PERIPHERAL_BASE     EQU        0x40000000                        ;peripheral start address
-DEF_AHB_BASE            EQU        DEF_PERIPHERAL_BASE + 0x00020000  ;AHB start address        
-DEF_IOPORT_BASE         EQU        DEF_PERIPHERAL_BASE + 0x10000000  ;IO port start address    
-DEF_GPIO_BASE           EQU        DEF_IOPORT_BASE     + 0x00000000  ;GPIO start address       
-DEF_RCC_BASE            EQU        DEF_AHB_BASE        + 0x00001000  ;RCC start address        
-DEF_FLASH_BASE          EQU        DEF_AHB_BASE        + 0x00002000  ;Flash start address      
-DEF_SCS_BASE            EQU        0xE000E010                        ;SCS start address        
-DEF_SCB_BASE            EQU        0xE000ED00                        ;SCB start address        
-;;=================================define address bases end==================================;;
+DEF_AHB_BASE            EQU        DEF_PERIPHERAL_BASE + 0x00020000  ;AHB start address
+DEF_IOPORT_BASE         EQU        DEF_PERIPHERAL_BASE + 0x10000000  ;IO port start address
+DEF_GPIO_BASE           EQU        DEF_IOPORT_BASE     + 0x00000000  ;GPIO start address
+DEF_RCC_BASE            EQU        DEF_AHB_BASE        + 0x00001000  ;RCC start address
+DEF_FLASH_BASE          EQU        DEF_AHB_BASE        + 0x00002000  ;Flash start address
+DEF_SCS_BASE            EQU        0xE000E010                        ;SCS start address
+DEF_SCB_BASE            EQU        0xE000ED00                        ;SCB start address
+;;=================================define address bases end==================================;; 
 
 
 
@@ -136,12 +137,45 @@ DEF_KER_STK_SPC         EQU        DEF_KER_SYS_THRD * DEF_KER_STK_SZ ;max stack 
 
 
 
+;;===================================define offsets starting=================================;; 
+DEF_TB_OFF_PRIO         EQU        0x00                              ;Prio offset from TCB   
+DEF_TB_OFF_STS          EQU        0x01                              ;status offset from TCB   
+DEF_TB_OFF_HLTH         EQU        0x02                              ;health offset from TCB   
+DEF_TB_OFF_HLTHS        EQU        0x03                              ;health sts offset from TCB
+DEF_TB_OFF_PSP          EQU        0x04                              ;PSP offset from TCB   
+DEF_TB_OFF_SLP          EQU        0x08                              ;sleep offset from TCB   
+DEF_TB_OFF_TOUT         EQU        0x0C                              ;timeout val offset from TCB
+DEF_TB_OFF_TSTMPL       EQU        0x10                              ;timestamp offset from TCB   
+DEF_TB_OFF_TSTMPH       EQU        0x14                              ;timestamp offset from TCB  
+DEF_TB_OFF_HBCNT        EQU        0x18                              ;Heartbeat offset from TCB   
+DEF_TB_OFF_WDT          EQU        0x1C                              ;watchdog offset from TCB   
+DEF_SV_OFF_TCNT         EQU        0x00                              ;thread cnt offset from SV   
+DEF_SV_OFF_CTID         EQU        0x04                              ;curr tid offset from SV  
+DEF_SV_OFF_YIELD        EQU        0x08                              ;yield offset from SV  
+DEF_SV_OFF_TMRSS64L     EQU        0x0C                              ;ss64 offset from SV  
+DEF_SV_OFF_TMRSS64H     EQU        0x10                              ;ss64 offset from SV  
+DEF_SV_OFF_TMRSS32      EQU        0x14                              ;ss32 offset from SV  
+DEF_SV_OFF_TMRS32       EQU        0x18                              ;s32 offset from SV  
+DEF_SV_OFF_TOTTK        EQU        0x1C                              ;tot tick offset from SV  
+DEF_SV_OFF_ACTTK        EQU        0x20                              ;act tick offset from SV  
+DEF_SV_OFF_USG          EQU        0x24                              ;cpu usg offset from SV  
+DEF_SV_OFF_USGAVG       EQU        0x28                              ;cpu usg avg offset from SV  
+DEF_SV_OFF_STKRLD       EQU        0x2C                              ;stk reload offset from SV  
+DEF_SV_OFF_ATOP         EQU        0x30                              ;atomic op offset from SV  
+DEF_SV_OFF_ATOPTID      EQU        0x34                              ;atomic op tid offset from SV  
+DEF_SV_OFF_HLTHOK       EQU        0x38                              ;health ok offset from SV  
+;;======================================define offsets end===================================;; 
+
+
+
+
+
 ;;================================define system macro starting===============================;; 
-THREAD_STS_READY        EQU        0x00                              ;ready state              
-THREAD_STS_BLOCKED      EQU        0x01                              ;blocked state            
-THREAD_STS_SUSPENDED    EQU        0x02                              ;suspended state          
-THREAD_STS_CONS_LAT     EQU        0x03                              ;constant latency state   
-THREAD_STS_EXECUTING    EQU        0x04                              ;executing state          
+THREAD_STS_READY        EQU        0x00                              ;ready state                 
+THREAD_STS_BLOCKED      EQU        0x01                              ;blocked state               
+THREAD_STS_SUSPENDED    EQU        0x02                              ;suspended state             
+THREAD_STS_CONS_LAT     EQU        0x03                              ;constant latency state      
+THREAD_STS_EXECUTING    EQU        0x04                              ;executing state             
 ;;===================================define system macro end=================================;; 
 
 
@@ -170,16 +204,18 @@ THREAD_STS_EXECUTING    EQU        0x04                              ;executing 
 ;only 3 base addresses will be used to make it easy to load and store with immediate
 ;fields under the bases are described bellow, offsets are inside braces (byte offset)
 ;ThrdSTK : stack space for all threads including idle thread, idle thread id is 0
-;ThrdCB  : ThrdCBPSP(0), ThrdCBPrio(4), ThrdCBSts(8), ThrdCBSlp(12), ThrdCBToutL:H(16, 20)
-;ThrdCB  : ThrdCBTStmpL:H(24, 28), ThrdCBHrbtET(32), ThrdCBHrbtET(36), Reserved(40-63)
-;SysVars : SysVarsTCnt(0), SysVarsCTID(4), SysVarsHiPrio(8), SysVarsPrioTID(12)
-;SysVars : SysVarsYield(16), SysVarsLST(20), SysVarsNxtWkupL:H(24, 28)
-;SysVars : SysVarsTmrSS64L:H(32, 36), SysVarsTmrSS32(40), SysVarsTmrS(44), SysVarsUsgTotTick(48)
-;SysVars : SysVarsUsgActTick(52), SysVarsUsg(56), SysVarsUsgAvg(60), SysVarsSystkRld(64)
-;SysVars : SysVarsAtmOp(68) SysVarsAtmOpTID(72) Reserved(76)
+;ThrdCB  : ThrdCBPrio(0), ThrdCBSts(1), ThrdCBHlth(2), ThrdCBHlthSet(3), ThrdCBPSP(4),
+;ThrdCB  : ThrdCBSlp(8), ThrdCBTout(12), ThrdCBTStmpL:H(16, 20), ThrdCBHbCnt(24),
+;ThrdCB  : ThrdCBWdt(28), TCB size is 32 bytes, first 4 fields are 1 byte wide
+;SysVars : SysVarsTCnt(0), SysVarsCTID(4), SysVarsYield(8), SysVarsTmrSS64L:H(12, 16),
+;SysVars : SysVarsTmrSS32(20), SysVarsTmrS(24), SysVarsUsgTotTick(28), SysVarsUsgActTick(32),
+;SysVars : SysVarsUsg(36), SysVarsUsgAvg(40), SysVarsSystkRld(44), SysVarsAtmOp(48),
+;SysVars : SysVarsAtmOpTID(52), SysVarsHlthOk(56), (see KER_SYS_VARS size)
+;ErrLogs : ErrLogsTID(0) + ErrLogsEID(1), ErrLogsTID(2) + ErrLogsEID(3)....
 KER_THREAD_STK          SPACE      DEF_KER_STK_SPC                   ;thread stack space
 KER_THREAD_CB           SPACE      DEF_KER_TCB_SZ * DEF_KER_SYS_THRD ;thread control block
 KER_SYS_VARS            SPACE      80                                ;system variables
+KER_ERR_LOG             SPACE      DEF_KER_ERR_LOG_SZ * 2            ;error logs for threads
 ;;=============================global variable definition end================================;; 
 
 
@@ -246,7 +282,7 @@ KER_PLL_STATUS_INFO
                         DCB        0x0D, 0x0A, 0x0D, 0x0A
                         DCB        0x00, 0x00
 KER_INFO_DATA_END
-                        SPACE      DEF_INFO_BLOCK_SIZE - (KER_INFO_BLOCK - KER_INFO_DATA_END)
+                        SPACE      DEF_INFO_BLOCK_SIZE - (KER_INFO_DATA_END - KER_INFO_BLOCK)
 KER_INFO_BLOCK_END
 ;;==================================kernel info block end====================================;;
 
@@ -265,18 +301,20 @@ KER_INFO_BLOCK_END
 ;;=========================global function declaration starting==============================;; 
                         EXPORT     Kernel_Init
                         EXPORT     Kernel_Thread_Create
-                        EXPORT     Kernel_Thread_Idle
                         EXPORT     Kernel_Thread_Sleep
                         EXPORT     Kernel_Thread_Heartbeat
+                        EXPORT     Kernel_Thread_Health_Set
+                        EXPORT     Kernel_Thread_Health_Get
+                        EXPORT     Kernel_Thread_Health_Check
                         EXPORT     Kernel_Thread_Run_All
                         EXPORT     Kernel_Atomic_Start
                         EXPORT     Kernel_Atomic_End
-                        EXPORT     Kernel_Print_Info
                         EXPORT     Kernel_Tick_SubSeconds_Get
                         EXPORT     Kernel_Tick_Seconds_Get
                         EXPORT     Kernel_Timeout_Set
-                        EXPORT     Kernel_Timeout_Status
+                        EXPORT     Kernel_Timeout_Status_Get
                         EXPORT     Kernel_CPU_Usage_Get
+                        EXPORT     Kernel_Print_Info
                         EXPORT     Kernel_Version_Major_Get
                         EXPORT     Kernel_Version_Minor_Get
                         EXPORT     Kernel_Version_Patch_Get
@@ -306,6 +344,7 @@ $ML.UDIV32_NO_SUB
                         BNE        $ML.UDIV32_LOOP
                         MEND                                         ;macro end
 ;;============================macro for unsigned divide end==================================;; 
+
 
 
 
@@ -433,26 +472,23 @@ $ML.CPU_PLL_STATUS_SKIP
                         MACRO_SYS_VAR_INIT                           ;macro name
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         MOVS       R1,   #0x00                       ;set val 0
-                        STR        R1,   [R0, #0]                    ;store SysVarsTCnt val
-                        STR        R1,   [R0, #4]                    ;store SysVarsCTID val
-                        STR        R1,   [R0, #8]                    ;store SysVarsHiPrio val
-                        STR        R1,   [R0, #12]                   ;store SysVarsPrioTID val
-                        STR        R1,   [R0, #16]                   ;store SysVarsYield val
-                        STR        R1,   [R0, #32]                   ;store SysVarsTmrSS64L val
-                        STR        R1,   [R0, #36]                   ;store SysVarsTmrSS64H val
-                        STR        R1,   [R0, #40]                   ;store SysVarsTmrSS32 val
-                        STR        R1,   [R0, #44]                   ;store SysVarsTmrS val
-                        STR        R1,   [R0, #52]                   ;store SysVarsUsgActTick
-                        STR        R1,   [R0, #56]                   ;store SysVarsUsg val
-                        STR        R1,   [R0, #60]                   ;store SysVarsUsgAvg val
-                        STR        R1,   [R0, #64]                   ;store SysVarsSystkRld val
-                        STR        R1,   [R0, #68]                   ;store SysVarsAtmOp val
-                        LDR        R1,   =1000                       ;load downcount val
-                        STR        R1,   [R0, #48]                   ;store SysVarsUsgTotTick
-                        LDR        R1,   =0xFFFFFFFF                 ;load 32 bit max val
-                        STR        R1,   [R0, #20]                   ;store SysVarsLST val
-                        STR        R1,   [R0, #24]                   ;store SysVarsNxtWkupL val
-                        STR        R1,   [R0, #28]                   ;store SysVarsNxtWkupH val
+                        MOVS       R2,   #0x01                       ;set val 1
+                        LDR        R3,   =1000                       ;load downcount val
+                        STR        R1,   [R0, #DEF_SV_OFF_TCNT]      ;store SysVarsTCnt val
+                        STR        R1,   [R0, #DEF_SV_OFF_CTID]      ;store SysVarsCTID val
+                        STR        R1,   [R0, #DEF_SV_OFF_YIELD]     ;store SysVarsYield val
+                        STR        R1,   [R0, #DEF_SV_OFF_TMRSS64L]  ;store SysVarsTmrSS64L val
+                        STR        R1,   [R0, #DEF_SV_OFF_TMRSS64H]  ;store SysVarsTmrSS64H val
+                        STR        R1,   [R0, #DEF_SV_OFF_TMRSS32]   ;store SysVarsTmrSS32 val
+                        STR        R1,   [R0, #DEF_SV_OFF_TMRS32]    ;store SysVarsTmrS val
+                        STR        R3,   [R0, #DEF_SV_OFF_TOTTK]     ;store SysVarsUsgTotTick
+                        STR        R1,   [R0, #DEF_SV_OFF_ACTTK]     ;store SysVarsUsgActTick
+                        STR        R1,   [R0, #DEF_SV_OFF_USG]       ;store SysVarsUsg val
+                        STR        R1,   [R0, #DEF_SV_OFF_USGAVG]    ;store SysVarsUsgAvg val
+                        STR        R1,   [R0, #DEF_SV_OFF_STKRLD]    ;store SysVarsSystkRld val
+                        STR        R1,   [R0, #DEF_SV_OFF_ATOP]      ;store SysVarsAtmOp val
+                        STR        R1,   [R0, #DEF_SV_OFF_ATOPTID]   ;store SysVarsAtmOpTid val
+                        STR        R2,   [R0, #DEF_SV_OFF_HLTHOK]    ;store SysVarsHlthOk val
                         MEND                                         ;macro end
 ;;==========================macro for system variable init end===============================;; 
 
@@ -462,21 +498,19 @@ $ML.CPU_PLL_STATUS_SKIP
 
 ;;==========================macro for debug gpio init starting===============================;; 
                         MACRO                                        ;macro start
-                        MACRO_GPIO_INIT  $ML                         ;macro name
-                        ;if debug disabled, skip
-                        MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
-                        BEQ        $ML.EXIT                          ;jump to exit
-                        ;enable clock from rcc
+                        MACRO_GPIO_INIT                              ;macro name
+                        IF         DEF_DBG_GPIO_TICK_EN == 0x01      ;if debug enabled
+                        ;enable clock from rcc                       ;rcc config
                         LDR        R0,   =DEF_RCC_IOPENR             ;load IOPENR address
                         LDR        R1,   [R0]                        ;load IOPENR val
                         LDR        R2,   =DEF_DBG_GPIO_PORT_BM       ;load bit mask val
                         ORRS       R1,   R1, R2                      ;set bit WRT PORT
                         STR        R1,   [R0]                        ;store val to IOPENR
-                        ;set BSRR->BR->pin low
+                        ;set BSRR->BR->pin low                       ;output config
                         LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
                         LDR        R1,   =DEF_DBG_BSRR_BR_VAL        ;load BSRR->BR val
                         STR        R1,   [R0]                        ;store val
-                        ;set pin as general purpose i/o
+                        ;set pin as general purpose i/o              ;mode config
                         LDR        R0,   =DEF_DBG_GPIO_MODER         ;load MODER address
                         LDR        R1,   [R0]                        ;load MODER val
                         LDR        R2,   =DEF_DBG_GPIO_PIN_GM        ;load MODER group mask val
@@ -485,7 +519,7 @@ $ML.CPU_PLL_STATUS_SKIP
                         LDR        R2,   =DEF_DBG_GPIO_PIN_OUT       ;load MODER ->out val
                         ORRS       R1,   R1, R2                      ;set output mode
                         STR        R1,   [R0]                        ;store val to MODER
-$ML.EXIT                                                                                         
+                        ENDIF                                        ;config end
                         MEND                                         ;macro end
 ;;==========================macro for debug gpio init end====================================;; 
 
@@ -495,14 +529,12 @@ $ML.EXIT
 
 ;;===========================macro for gpio set starting=====================================;; 
                         MACRO                                        ;macro start
-                        MACRO_GPIO_SET   $ML                         ;macro name
-                        ;if debug disabled, skip
-                        MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
-                        BEQ        $ML.EXIT                          ;jump to exit
+                        MACRO_GPIO_SET                               ;macro name
+                        IF         DEF_DBG_GPIO_TICK_EN == 0x01      ;if debug enabled
                         LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
                         LDR        R1,   =DEF_DBG_BSRR_BS_VAL        ;load bit set val
                         STR        R1,   [R0]                        ;store val
-$ML.EXIT
+                        ENDIF                                        ;pin set end
                         MEND                                         ;macro end
 ;;=============================macro for gpio set end========================================;; 
 
@@ -512,14 +544,12 @@ $ML.EXIT
 
 ;;===========================macro for gpio clear starting===================================;; 
                         MACRO                                        ;macro start
-                        MACRO_GPIO_CLEAR  $ML                        ;macro name
-                        ;if debug disabled, skip
-                        MOVS       R0,   #DEF_DBG_GPIO_TICK_EN       ;load device config
-                        BEQ        $ML.EXIT                          ;jump to exit
+                        MACRO_GPIO_CLEAR                             ;macro name
+                        IF         DEF_DBG_GPIO_TICK_EN == 0x01      ;if debug enabled
                         LDR        R0,   =DEF_DBG_GPIO_BSRR          ;load BSRR address
                         LDR        R1,   =DEF_DBG_BSRR_BR_VAL        ;load bit clear val
                         STR        R1,   [R0]                        ;store val
-$ML.EXIT
+                        ENDIF                                        ;pin clear end
                         MEND                                         ;macro end
 ;;=============================macro for gpio clear end======================================;; 
 
@@ -550,7 +580,7 @@ $ML.CHECKCONFIG
 $ML.CLOCK64MHZ        
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R1,   =63999                      ;load val for 1ms
-                        STR        R1,   [R0, #64]                   ;store SysVarsSystkRld
+                        STR        R1,   [R0, #DEF_SV_OFF_STKRLD]    ;store SysVarsSystkRld
                         LDR        R0,   =DEF_FLASH_ACR              ;load addr
                         LDR        R1,   [R0]                        ;load data
                         LDR        R2,   =0x00000307                 ;LAT + PRFTEN + ICEN
@@ -591,7 +621,7 @@ $ML.PLLLOCK
                         LDR        R2,   =0x02000000                 ;bit 25, PLLRDY
                         ANDS       R1,   R2                          ;check bit
                         BEQ        $ML.PLLLOCK                       ;wait until locked
-$ML.SWPLLRSW           
+$ML.SWPLLRSW            
                         LDR        R0,   =DEF_RCC_CFGR               ;load addr
                         LDR        R1,   [R0]                        ;load val
                         MOVS       R2,   #0x07                       ;set bit0-2
@@ -611,7 +641,7 @@ $ML.SWSPLLR
 $ML.CLOCK16MHZ
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         LDR        R1,   =15999                      ;load val for 1ms
-                        STR        R1,   [R0, #64]                   ;store SysVarsSystkRld
+                        STR        R1,   [R0, #DEF_SV_OFF_STKRLD]    ;store SysVarsSystkRld
                         LDR        R0,   =DEF_RCC_CFGR               ;load addr
                         LDR        R1,   [R0]                        ;load val
                         MOVS       R2,   #0x07                       ;set bit0-2
@@ -635,7 +665,7 @@ $ML.EXIT
                         MACRO                                        ;macro start
                         MACRO_SYSTICK_CONFIG                         ;macro name
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #64]                   ;load SysVarsSystkRld
+                        LDR        R0,   [R0, #DEF_SV_OFF_STKRLD]    ;load SysVarsSystkRld
                         LDR        R1,   =DEF_STK_LOAD               ;load stk_load reg address
                         STR        R0,   [R1]                        ;set val to reg
                         LDR        R0,   =DEF_STK_VAL                ;load stk_val reg address
@@ -651,63 +681,24 @@ $ML.EXIT
 
 
 
-;;===========================macro for pushing R4-R11 starting===============================;; 
-                        MACRO                                        ;macro start
-                        MACRO_PUSH_R4_R11                            ;macro name
-                        MRS        R0,   PSP                         ;load PSP in R0
-                        SUBS       R0,   #32                         ;subtract 32 bytes
-                        STR        R4,   [R0, #0]                    ;load data
-                        STR        R5,   [R0, #4]                    ;load data
-                        STR        R6,   [R0, #8]                    ;load data
-                        STR        R7,   [R0, #12]                   ;load data
-                        MOV        R1,   R8                          ;copy
-                        STR        R1,   [R0, #16]                   ;load data
-                        MOV        R1,   R9                          ;copy
-                        STR        R1,   [R0, #20]                   ;load data
-                        MOV        R1,   R10                         ;copy
-                        STR        R1,   [R0, #24]                   ;load data
-                        MOV        R1,   R11                         ;copy
-                        STR        R1,   [R0, #28]                   ;load data
-                        MEND                                         ;macro end
-;;============================macro for pushing R4-R11 end===================================;; 
-
-
-
-
-
-;;===========================macro for popping R4-R11 starting===============================;; 
-                        MACRO                                        ;macro start
-                        MACRO_POP_R11_R4                             ;macro name
-                        LDR        R4,   [R0, #0]                    ;load data
-                        LDR        R5,   [R0, #4]                    ;load data
-                        LDR        R6,   [R0, #8]                    ;load data
-                        LDR        R7,   [R0, #12]                   ;load data
-                        LDR        R1,   [R0, #16]                   ;load data
-                        MOV        R8,   R1                          ;copy
-                        LDR        R1,   [R0, #20]                   ;load data
-                        MOV        R9,   R1                          ;copy
-                        LDR        R1,   [R0, #24]                   ;load data
-                        MOV        R10,  R1                          ;copy
-                        LDR        R1,   [R0, #28]                   ;load data
-                        MOV        R11,  R1                          ;copy
-                        ADDS       R0,   #32                         ;add 32 bytes
-                        MSR        PSP,  R0                          ;update new top of stack
-                        MEND                                         ;macro end
-;;==============================macro for popping R4-R11 end=================================;; 
-
-
-
-
-
 ;;=============================macro for context save starting===============================;; 
                         MACRO                                        ;macro start
                         MACRO_CONTEXT_SAVE                           ;macro name
-                        MACRO_PUSH_R4_R11                            ;push R4-R11, R0 Stk top
+                        MRS        R0,   PSP                         ;load PSP in R0
+                        SUBS       R0,   #32                         ;subtract 32 bytes
+                        STMIA      R0!,  {R4-R7}                     ;store R4-R7
+                        MOV        R4,   R8                          ;copy R8
+                        MOV        R5,   R9                          ;copy R9
+                        MOV        R6,   R10                         ;copy R10
+                        MOV        R7,   R11                         ;copy R11
+                        STMIA      R0!,  {R4-R7}                     ;store R8-R11
+                        SUBS       R0,   #32                         ;subtract 32 bytes
                         LDR        R1,   =KER_THREAD_CB              ;R1 ThrdCB base        [R]
                         LDR        R2,   =KER_SYS_VARS               ;R2 SysVars base       [R]
-                        LDR        R3,   [R2, #16]                   ;R3 SysVarsYield       [R]
-                        LDR        R4,   [R2, #4]                    ;load SysVarsCTID
-                        LSLS       R4,   R4, #DEF_KER_TCB_LSFT       ;multiply by TCB size
+                        LDR        R3,   [R2, #DEF_SV_OFF_YIELD]     ;R3 SysVarsYield       [R]
+                        LDR        R4,   [R2, #DEF_SV_OFF_CTID]      ;load SysVarsCTID
+                        LSLS       R4,   R4,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
+                        ADDS       R4,   R4,  #DEF_TB_OFF_PSP        ;compute PSP offset
                         STR        R0,   [R1, R4]                    ;store ThrdCBPSP top
                         MEND                                         ;macro end
 ;;================================macro for context save end=================================;; 
@@ -719,10 +710,20 @@ $ML.EXIT
 ;;============================macro for context restore starting=============================;; 
                         MACRO                                        ;macro start
                         MACRO_CONTEXT_RESTORE                        ;macro name
-                        LDR        R4,   [R2, #4]                    ;load SysVarsCTID      [R]
+                        LDR        R4,   [R2, #DEF_SV_OFF_CTID]      ;load SysVarsCTID      [R]
                         LSLS       R4,   R4,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
-                        LDR        R0,   [R1, R4]                    ;load thread PSP
-                        MACRO_POP_R11_R4                             ;pop R11-R4 manually   [R]
+                        ADDS       R4,   R4,  #DEF_TB_OFF_PSP        ;compute PSP offset
+                        LDR        R0,   [R1, R4]                    ;load ThrdCBPSP top    [R]
+                        ADDS       R0,   #16                         ;point R8-R11 slots
+                        LDMIA      R0!,  {R4-R7}                     ;load R8-R11
+                        MOV        R8,   R4                          ;copy R8
+                        MOV        R9,   R5                          ;copy R9
+                        MOV        R10,  R6                          ;copy R10
+                        MOV        R11,  R7                          ;copy R11
+                        SUBS       R0,   #32                         ;back to R4-R7 slots
+                        LDMIA      R0!,  {R4-R7}                     ;load R4-R7
+                        ADDS       R0,   #16                         ;skip R8-R11 slots
+                        MSR        PSP,  R0                          ;update new top of stack
                         MEND                                         ;macro end
 ;;==============================macro for context restore end================================;; 
 
@@ -733,7 +734,7 @@ $ML.EXIT
 ;;============================macro for scheduler starting===================================;; 
                         MACRO                                        ;macro start
                         MACRO_KER_RUN_SCHEDULER $ML                  ;macro name, local label
-                        LDR        R7,   [R2, #0]                    ;load SysVarsTCnt      [R]
+                        LDR        R7,   [R2, #DEF_SV_OFF_TCNT]      ;load SysVarsTCnt      [R]
                         LSLS       R7,   R7, #DEF_KER_TCB_LSFT       ;TCnt * TCB size
                         ADDS       R7,   R7, R1                      ;compute end pointer
                         MOV        R8,   R7                          ;copy end pointer to R8
@@ -746,14 +747,15 @@ $ML.EXIT
                         BHS        $ML.DONE                          ;only thread is idle
                         ALIGN      8                                 ;align loop head
 $ML.LOOP                                                             ;loop starting
-                        LDR        R7,   [R6, #12]                   ;load ThrdCBSlp
+                        LDR        R7,   [R6, #DEF_TB_OFF_SLP]       ;load ThrdCBSlp
                         TST        R7,   R7                          ;test if 0
                         BEQ        $ML.TREADY                        ;not sleeping
                         ADDS       R7,   R7, R0                      ;if not yield, r0 = -1
-                        STR        R7,   [R6, #12]                   ;store ThrdCBSlp
+                        STR        R7,   [R6, #DEF_TB_OFF_SLP]       ;store ThrdCBSlp
                         BNE        $ML.TNEXT                         ;still sleeping
 $ML.TREADY                                                           ;thread is ready
-                        LDR        R7,   [R6, #4]                    ;load ThrdCBPrio
+                        LDRB       R7,   [R6, #DEF_TB_OFF_PRIO]      ;load ThrdCBPrio
+                        SXTB       R7,   R7                          ;sign-extend to int32
                         CMP        R7,   R4                          ;compare with best
                         BGE        $ML.TNEXT                         ;not better, skip
                         MOVS       R4,   R7                          ;new best prio
@@ -775,15 +777,15 @@ $ML.DONE                                                             ;iteration 
 ;;=========================macro for scheduler exception starting============================;; 
                         MACRO                                        ;macro start
                         MACRO_KER_SCHEDULER_EXC $ML                  ;macro name, local label
-                        LDR        R0,   [R2, #68]                   ;load SysVarsAtmOp     [R]
+                        LDR        R0,   [R2, #DEF_SV_OFF_ATOP]      ;load SysVarsAtmOp     [R]
                         TST        R0,   R0                          ;atomic operation?
                         BEQ        $ML.STORECTID                     ;if no, take R5
                         CMP        R4,   #0                          ;check if prio is neg
                         BLT        $ML.STORECTID                     ;system thread preempts
-                        LDR        R6,   [R2, #72]                   ;owner ->SysVarsAtmOpTID
+                        LDR        R6,   [R2, #DEF_SV_OFF_ATOPTID]   ;owner ->SysVarsAtmOpTID
                         LSLS       R0,   R6, #DEF_KER_TCB_LSFT       ;owner offset
                         ADDS       R0,   R0, R1                      ;owner TCB
-                        LDR        R0,   [R0, #12]                   ;owner sleep count
+                        LDR        R0,   [R0, #DEF_TB_OFF_SLP]       ;owner ThrdCBSlp
                         TST        R0,   R0                          ;owner asleep?
                         BNE        $ML.OWNERSLEEP                    ;yes
                         MOVS       R5,   R6                          ;owner keeps the CPU
@@ -791,7 +793,7 @@ $ML.DONE                                                             ;iteration 
 $ML.OWNERSLEEP                                                       ;owner sleep inside lock
                         MOVS       R5,   #0x00                       ;run idle
 $ML.STORECTID                                                        ;store thread ID
-                        STR        R5,   [R2, #4]                    ;select SysVarsCTID    [R]
+                        STR        R5,   [R2, #DEF_SV_OFF_CTID]      ;select SysVarsCTID    [R]
                         MEND                                         ;macro end
 ;;============================macro for scheduler exception end==============================;; 
 
@@ -804,25 +806,25 @@ $ML.STORECTID                                                        ;store thre
                         MACRO_TMR_UPDT   $ML                         ;macro name
                         TST        R3,   R3                          ;test val, Yield flag  [R]
                         BNE        $ML.EXIT                          ;jmp to label
-                        LDR        R4,   [R2, #32]                   ;load SysVarsTmrSS64L  [R]
+                        LDR        R4,   [R2, #DEF_SV_OFF_TMRSS64L]  ;load SysVarsTmrSS64L  [R]
                         ADDS       R4,   R4,  #1                     ;increment val
-                        STR        R4,   [R2, #32]                   ;store SysVarsTmrSS64L [R]
+                        STR        R4,   [R2, #DEF_SV_OFF_TMRSS64L]  ;store SysVarsTmrSS64L [R]
                         BNE        $ML.S_CNT_START                   ;jmp to label
-                        LDR        R4,   [R2, #36]                   ;load SysVarsTmrSS64H  [R]
+                        LDR        R4,   [R2, #DEF_SV_OFF_TMRSS64H]  ;load SysVarsTmrSS64H  [R]
                         ADDS       R4,   R4,  #1                     ;increment val
-                        STR        R4,   [R2, #36]                   ;store SysVarsTmrSS64H [R]
+                        STR        R4,   [R2, #DEF_SV_OFF_TMRSS64H]  ;store SysVarsTmrSS64H [R]
 $ML.S_CNT_START                                                      ;start of second counter
-                        LDR        R4,   [R2, #40]                   ;load SysVarsTmrSS32   [R]
+                        LDR        R4,   [R2, #DEF_SV_OFF_TMRSS32]   ;load SysVarsTmrSS32   [R]
                         ADDS       R4,   R4,  #1                     ;increment val
                         LDR        R5,   =1000                       ;compare with 1000ms
                         CMP        R4,   R5                          ;compare with val
                         BLO        $ML.SAVE_TICK                     ;no need to inc sec
                         MOVS       R4,   #0x00                       ;clear counter
-                        LDR        R5,   [R2, #44]                   ;load SysVarsTmrS      [R]
+                        LDR        R5,   [R2, #DEF_SV_OFF_TMRS32]    ;load SysVarsTmrS      [R]
                         ADDS       R5,   R5,  #1                     ;increment val
-                        STR        R5,   [R2, #44]                   ;store SysVarsTmrS     [R]
+                        STR        R5,   [R2, #DEF_SV_OFF_TMRS32]    ;store SysVarsTmrS     [R]
 $ML.SAVE_TICK                                                        ;save current tick
-                        STR        R4,   [R2, #40]                   ;store SysVarsTmrSS32  [R]
+                        STR        R4,   [R2, #DEF_SV_OFF_TMRSS32]   ;store SysVarsTmrSS32  [R]
 $ML.EXIT                                                             ;macro exit
                         MEND                                         ;macro end
 ;;=======================macro for sub-seconds & seconds counter end=========================;; 
@@ -836,26 +838,26 @@ $ML.EXIT                                                             ;macro exit
                         MACRO_CPU_USAGE  $ML                         ;macro name
                         TST        R3,   R3                          ;test val, Yield       [R]
                         BNE        $ML.EXIT                          ;jmp to label
-                        LDR        R4,   [R2, #4]                    ;load SysVarsCTID      [R]
+                        LDR        R4,   [R2, #DEF_SV_OFF_CTID]      ;load SysVarsCTID      [R]
                         TST        R4,   R4                          ;check val
-                        LDR        R4,   [R2, #52]                   ;ldr SysVarsUsgActTick [R] 
+                        LDR        R4,   [R2, #DEF_SV_OFF_ACTTK]     ;ldr SysVarsUsgActTick [R] 
                         BEQ        $ML.SKIP_INC                      ;if thread is idle, skip
                         ADDS       R4,   R4,  #1                     ;increment val
-                        STR        R4,   [R2, #52]                   ;str SysVarsUsgActTick [R]
+                        STR        R4,   [R2, #DEF_SV_OFF_ACTTK]     ;str SysVarsUsgActTick [R]
 $ML.SKIP_INC                                                         ;label->no increment
-                        LDR        R5,   [R2, #48]                   ;ldr window ticks left [R]
+                        LDR        R5,   [R2, #DEF_SV_OFF_TOTTK]     ;total ticks left      [R]
                         SUBS       R5,   R5,  #1                     ;count down
-                        STR        R5,   [R2, #48]                   ;store window ticks left
+                        STR        R5,   [R2, #DEF_SV_OFF_TOTTK]     ;store total ticks left
                         BNE        $ML.EXIT                          ;window not over, done
-                        STR        R4,   [R2, #56]                   ;store SysVarsUsg      [R]
-                        LDR        R6,   [R2, #60]                   ;load SysVarsUsgAvg    [R]
+                        STR        R4,   [R2, #DEF_SV_OFF_USG]       ;store SysVarsUsg      [R]
+                        LDR        R6,   [R2, #DEF_SV_OFF_USGAVG]    ;load SysVarsUsgAvg    [R]
                         ADDS       R4,   R4, R6                      ;curr = prev + curr
                         LSRS       R4,   R4, #1                      ;curr = curr / 2
-                        STR        R4,   [R2, #60]                   ;store SysVarsUsgAvg   [R]
-                        MOVS       R6,   #0x00                       ;zero
-                        STR        R6,   [R2, #52]                   ;SysVarsUsgActTick 0   [R]
-                        LDR        R5,   =1000                       ;window length
-                        STR        R5,   [R2, #48]                   ;SysVarsUsgTotTick     [R]
+                        STR        R4,   [R2, #DEF_SV_OFF_USGAVG]    ;store SysVarsUsgAvg   [R]
+                        MOVS       R6,   #0x00                       ;clear reg
+                        STR        R6,   [R2, #DEF_SV_OFF_ACTTK]     ;SysVarsUsgActTick 0   [R]
+                        LDR        R5,   =1000                       ;reload total tick cnt
+                        STR        R5,   [R2, #DEF_SV_OFF_TOTTK]     ;SysVarsUsgTotTick     [R]
 $ML.EXIT                                                             ;label->exit
                         MEND                                         ;macro end
 ;;===========================macro for cpu usage calculation end=============================;; 
@@ -868,7 +870,7 @@ $ML.EXIT                                                             ;label->exi
                         MACRO                                        ;macro start
                         MACRO_CLR_YIELD                              ;macro name
                         MOVS       R4,   #0x00                       ;clear reg
-                        STR        R4,   [R2, #16]                   ;store SysVarsYield
+                        STR        R4,   [R2, #DEF_SV_OFF_YIELD]     ;store SysVarsYield
                         MEND                                         ;macro end
 ;;=============================macro for clear yield flag end================================;; 
 
@@ -903,15 +905,15 @@ PendSV_Handler
                         ;Hardware pushed (address wise, high->low) xPSR,PC,LR,R12,R3-R0
                         ;Software pushed (address wise, high->low) R11-R4
                         CPSID      I                                 ;disable interrupts
-                        MACRO_GPIO_SET          ISRLBL1              ;debug pin set
+                        MACRO_GPIO_SET                               ;debug pin set
                         MACRO_CONTEXT_SAVE                           ;save context
-                        MACRO_KER_RUN_SCHEDULER ISRLBL2              ;run scheduler, local label
-                        MACRO_KER_SCHEDULER_EXC ISRLBL3              ;exception handler
-                        MACRO_TMR_UPDT          ISRLBL4              ;ss and seconds counter
-                        MACRO_CPU_USAGE         ISRLBL5              ;calculate cpu usage
+                        MACRO_KER_RUN_SCHEDULER ISRLBL1              ;run scheduler, local label
+                        MACRO_KER_SCHEDULER_EXC ISRLBL2              ;exception handler
+                        MACRO_TMR_UPDT          ISRLBL3              ;ss and seconds counter
+                        MACRO_CPU_USAGE         ISRLBL4              ;calculate cpu usage
                         MACRO_CLR_YIELD                              ;clear yield flag
                         MACRO_CONTEXT_RESTORE                        ;restore context
-                        MACRO_GPIO_CLEAR        ISRLBL6              ;debug pin clear
+                        MACRO_GPIO_CLEAR                             ;debug pin clear
                         CPSIE      I                                 ;enable interrupt
                         BX         LR                                ;return from interrupt
 ;;================================pending service isr end====================================;; 
@@ -932,10 +934,9 @@ PendSV_Handler
 ;;==================================kernel init starting=====================================;; 
 Kernel_Init
                         PUSH       {R4, LR}                          ;push, 8 bytes alignment
-                        MACRO_GPIO_INIT         PLBL1                ;gpio init for debug
+                        MACRO_GPIO_INIT                              ;gpio init for debug
                         MACRO_SYS_VAR_INIT                           ;system variable init
-                        MACRO_64MHZ_PLL_CONFIG  PLBL2                ;config pll if enabled
-                        ;set PendSV as lowest priority interrupt
+                        MACRO_64MHZ_PLL_CONFIG  PLBL1                ;config pll if enabled
                         LDR        R0,   =DEF_SCB_SHPR3              ;load SHPR3 addr
                         LDR        R1,   [R0]                        ;load SHPR3 val
                         LDR        R2,   =0xFF<<16                   ;set lowest priority
@@ -962,10 +963,20 @@ Kernel_Init
 
 ;;=================================thread create starting====================================;; 
 Kernel_Thread_Create
+                        CMP        R0,   #0                          ;check null val
+                        BEQ        KER_FPTR_NULL                     ;null function pointer
+                        LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R2,   [R2, #DEF_SV_OFF_TCNT]      ;current thread count
+                        CMP        R2,   #DEF_KER_SYS_THRD           ;slots incl. idle
+                        BLO        KER_TCNT_OK                       ;jump to thread create
+KER_FPTR_NULL                                                        ;return from this func
+                        MOVS       R0,   #0                          ;set 0 (failed)
+                        BX         LR                                ;return
+KER_TCNT_OK                                                          ;jmp poin tcnt ok
                         ;calculate stack top for this thread (R0:R1 are used by arguments)
                         LDR        R2,   =DEF_KER_STK_SZ             ;load each stack size
                         LDR        R3,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R3,   [R3, #0]                    ;load SysVarsTCnt
+                        LDR        R3,   [R3, #DEF_SV_OFF_TCNT]      ;load SysVarsTCnt
                         ADDS       R3,   R3, #1                      ;SysVarsTCnt+1
                         MULS       R2,   R3, R2                      ;(SysVarsTCnt+1)*size
                         LDR        R3,   =KER_THREAD_STK             ;stack base
@@ -996,26 +1007,28 @@ Kernel_Thread_Create
                         STR        R3,   [R2, #60]                   ;xPSR (Thumb)
                         ;update variables and flags
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #0]                    ;SysVarsTCnt
+                        LDR        R0,   [R0, #DEF_SV_OFF_TCNT]      ;SysVarsTCnt
                         LSLS       R0,   R0, #DEF_KER_TCB_LSFT       ;TCB offset
                         LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
                         ADDS       R3,   R3, R0                      ;TCB address
-                        STR        R2,   [R3, #0]                    ;store ThrdCBPSP
-                        SXTB       R1,   R1                          ;produce 2's complement
-                        STR        R1,   [R3, #4]                    ;store ThrdCBPrio
+                        STR        R2,   [R3, #DEF_TB_OFF_PSP]       ;store ThrdCBPSP
+                        STRB       R1,   [R3, #DEF_TB_OFF_PRIO]      ;store ThrdCBPrio
                         MOVS       R1,   #THREAD_STS_READY           ;set flag
-                        STR        R1,   [R3, #8]                    ;store ThrdCBSts
-                        MOVS       R0,   #0x00                       ;clear reg
-                        STR        R0,   [R3, #12]                   ;store ThrdCBSlp
-                        STR        R0,   [R3, #16]                   ;store ThrdCBToutL
-                        STR        R0,   [R3, #20]                   ;store ThrdCBToutH
-                        STR        R0,   [R3, #24]                   ;store ThrdCBTStmpL
-                        STR        R0,   [R3, #28]                   ;store ThrdCBTStmpH
-                        STR        R0,   [R3, #32]                   ;store ThrdCBHrbtET
+                        STRB       R1,   [R3, #DEF_TB_OFF_STS]       ;store ThrdCBSts
+                        MOVS       R0,   #0                          ;clear reg
+                        STR        R0,   [R3, #DEF_TB_OFF_SLP]       ;store ThrdCBSlp
+                        STR        R0,   [R3, #DEF_TB_OFF_TOUT]      ;store ThrdCBTout
+                        STR        R0,   [R3, #DEF_TB_OFF_TSTMPL]    ;store ThrdCBTStmpL
+                        STR        R0,   [R3, #DEF_TB_OFF_TSTMPH]    ;store ThrdCBTStmpH
+                        STR        R0,   [R3, #DEF_TB_OFF_HBCNT]     ;store ThrdCBHbCnt
+                        STR        R0,   [R3, #DEF_TB_OFF_WDT]       ;store ThrdCBWdt
+                        STRB       R0,   [R3, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
+                        STRB       R0,   [R3, #DEF_TB_OFF_HLTHS]     ;store ThrdCBHlthSet
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R1,   [R0, #0]                    ;SysVarsTCnt
+                        LDR        R1,   [R0, #DEF_SV_OFF_TCNT]      ;load SysVarsTCnt
                         ADDS       R1,   R1, #1                      ;increment SysVarsTCnt
-                        STR        R1,   [R0, #0]                    ;store SysVarsTCnt
+                        STR        R1,   [R0, #DEF_SV_OFF_TCNT]      ;store SysVarsTCnt
+                        MOVS       R0,   #1                          ;set 1 (success)
                         BX         LR                                ;return
 ;;====================================thread create end======================================;; 
 
@@ -1032,6 +1045,7 @@ Kernel_Thread_Idle
 
 
 
+
 ;;===============================emit literal pool starting==================================;; 
                         ALIGN      4
                         LTORG
@@ -1044,17 +1058,17 @@ Kernel_Thread_Idle
 ;;==============================kernel thread sleep starting=================================;; 
 Kernel_Thread_Sleep
                         LDR        R1,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R2,   [R1, #4]                    ;load SysVarsCTID
+                        LDR        R2,   [R1, #DEF_SV_OFF_CTID]      ;load SysVarsCTID
                         LSLS       R2,   R2, #DEF_KER_TCB_LSFT       ;multiply by TCB size
                         LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
                         ADDS       R2,   R2, R3                      ;base + offset
                         MRS        R3,   PRIMASK                     ;store interrupt state
                         CPSID      I                                 ;disable interrupts
-                        STR        R0,   [R2, #12]                   ;store ThrdCBSlp
+                        STR        R0,   [R2, #DEF_TB_OFF_SLP]       ;store ThrdCBSlp
                         MOVS       R0,   #THREAD_STS_BLOCKED         ;set status blocked
-                        STR        R0,   [R2, #8]                    ;store ThrdCBSts
+                        STRB       R0,   [R2, #DEF_TB_OFF_STS]       ;store ThrdCBSts
                         MOVS       R0,   #0x01                       ;set flag
-                        STR        R0,   [R1, #16]                   ;store SysVarsYields
+                        STR        R0,   [R1, #DEF_SV_OFF_YIELD]     ;store SysVarsYields
                         LDR        R0,   =DEF_SCB_ICSR               ;load SCB->ICSR addr
                         LDR        R1,   =0x10000000                 ;load set_PendSV bit
                         STR        R1,   [R0]                        ;store val
@@ -1072,16 +1086,19 @@ Kernel_Thread_Sleep
 Kernel_Thread_Heartbeat
                         PUSH       {R4, LR}                          ;push, 8 bytes alignment
                         BL         Kernel_Tick_SubSeconds_Get        ;call function
-						LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
-						LDR        R2,   [R2, #4]                    ;SysVarsCTID
-						LSLS       R2,   R2, #DEF_KER_TCB_LSFT       ;in thread offset
+                        LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R2,   [R2, #DEF_SV_OFF_CTID]      ;SysVarsCTID
+                        LSLS       R2,   R2, #DEF_KER_TCB_LSFT       ;in thread offset
                         LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
-						ADDS       R2,   R2, R3                      ;my TCB
-						LDR        R3,   [R2, #24]                   ;load ThrdCBTStmpL
-                        STR        R0,   [R2, #24]                   ;store ThrdCBTStmpL
-                        STR        R1,   [R2, #28]                   ;store ThrdCBTStmpH
-                        SUBS       R0,   R0, R3                      ;subtract low words
-                        STR        R0,   [R2, #32]                   ;store ThrdCBHrbtET
+                        ADDS       R2,   R2, R3                      ;my TCB
+                        LDR        R3,   [R2, #DEF_TB_OFF_HBCNT]     ;load ThrdCBHbCnt
+                        ADDS       R3,   R3, #1                      ;increment val
+                        MRS        R4,   PRIMASK                     ;store interrupt state
+                        CPSID      I                                 ;disable interrupts
+                        STR        R0,   [R2, #DEF_TB_OFF_TSTMPL]    ;store ThrdCBTStmpL
+                        STR        R1,   [R2, #DEF_TB_OFF_TSTMPH]    ;store ThrdCBTStmpH
+                        STR        R3,   [R2, #DEF_TB_OFF_HBCNT]     ;store ThrdCBHbCnt
+                        MSR        PRIMASK, R4                       ;restore interrupt
                         POP        {R4, PC}                          ;return
 ;;===============================kernel thread heartbeat end=================================;; 
 
@@ -1091,8 +1108,6 @@ Kernel_Thread_Heartbeat
 
 ;;=================================start threads starting====================================;; 
 Kernel_Thread_Run_All
-                        ;configure SysTick timer
-                        MACRO_SYSTICK_CONFIG                         ;configure systick
                         MACRO_KER_INFO_INIT    DBG_INFO              ;init kernel info
                         ;calculate stack top for this thread
                         LDR        R0,   =DEF_KER_STK_SZ             ;load each stack size
@@ -1105,6 +1120,7 @@ Kernel_Thread_Run_All
                         ORRS       R1,   R1, R2                      ;CONTROL.SPSEL = 1
                         MSR        CONTROL, R1                       ;switch to PSP
                         ISB                                          ;instruction barrier
+                        MACRO_SYSTICK_CONFIG                         ;configure systick
                         B          Kernel_Thread_Idle                ;call a thread
 ;;====================================start threads end======================================;; 
 
@@ -1118,9 +1134,9 @@ Kernel_Atomic_Start
                         MOVS       R1,   #0x01                       ;set atomic operation flag
                         MRS        R2,   PRIMASK                     ;store interrupt state
                         CPSID      I                                 ;disable interrupts
-                        STR        R1,   [R0, #68]                   ;store SysVarsAtmOp
-                        LDR        R3,   [R0, #4]                    ;load SysVarsCTID
-                        STR        R3,   [R0, #72]                   ;store SysVarsAtmOpTID
+                        STR        R1,   [R0, #DEF_SV_OFF_ATOP]      ;store SysVarsAtmOp
+                        LDR        R3,   [R0, #DEF_SV_OFF_CTID]      ;load SysVarsCTID
+                        STR        R3,   [R0, #DEF_SV_OFF_ATOPTID]   ;store SysVarsAtmOpTID
                         MSR        PRIMASK, R2                       ;restore interrupt
                         BX         LR                                ;return
 ;;===============================kernel atomic operation end=================================;; 
@@ -1133,9 +1149,175 @@ Kernel_Atomic_Start
 Kernel_Atomic_End
                         LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
                         MOVS       R1,   #0x00                       ;set atomic operation flag
-                        STR        R1,   [R0, #68]                   ;store SysVarsAtmOp
+                        STR        R1,   [R0, #DEF_SV_OFF_ATOP]      ;store SysVarsAtmOp
                         BX         LR                                ;return
 ;;===============================kernel atomic operation end=================================;; 
+
+
+
+
+
+;;==========================kernel tick 64bit SS val get starting============================;;   
+Kernel_Tick_SubSeconds_Get
+                        LDR        R3,   =KER_SYS_VARS               ;load SysVars addr
+KER_TICK_SS64_RETRY                                                  ;retry label
+                        LDR        R1,   [R3, #DEF_SV_OFF_TMRSS64H]  ;load SysVarsTmrSS64H
+                        LDR        R0,   [R3, #DEF_SV_OFF_TMRSS64L]  ;load SysVarsTmrSS64L
+                        LDR        R2,   [R3, #DEF_SV_OFF_TMRSS64H]  ;load SysVarsTmrSS64H
+                        CMP        R1,   R2                          ;changed during the read?
+                        BNE        KER_TICK_SS64_RETRY               ;SysVarsTmrSS64H diff, rty
+                        BX         LR                                ;return
+;;============================kernel tick 64bit SS val get end===============================;; 
+
+
+
+
+
+;;==========================kernel tick seconds val get starting=============================;; 
+Kernel_Tick_Seconds_Get
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R0,   [R0, #DEF_SV_OFF_TMRS32]    ;load SysVarsTmrS
+                        BX         LR                                ;return
+;;============================kernel tick seconds val get end================================;; 
+
+
+
+
+
+;;===========================kernel thread health set starting===============================;; 
+Kernel_Thread_Health_Set
+                        PUSH       {R4, R5, R6, LR}                  ;push, 8 bytes alignment
+                        MOVS       R4,   R0                          ;copy timeout
+                        MOVS       R5,   R1                          ;copy health
+                        BL         Kernel_Thread_Heartbeat           ;first beat as setup
+                        LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R2,   [R2, #DEF_SV_OFF_CTID]      ;load SysVarsCTID
+                        LSLS       R2,   R2,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
+                        LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
+                        ADDS       R2,   R2, R3                      ;base + offset
+                        MOVS       R3,   #1                          ;set flag
+                        MRS        R6,   PRIMASK                     ;store interrupt state
+                        CPSID      I                                 ;disable interrupts
+                        STR        R4,   [R2, #DEF_TB_OFF_WDT]       ;store ThrdCBWdt
+                        STRB       R5,   [R2, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
+                        STRB       R3,   [R2, #DEF_TB_OFF_HLTHS]     ;store ThrdCBHlthSet
+                        MSR        PRIMASK, R6                       ;restore interrupt
+                        POP        {R4, R5, R6, PC}                  ;return
+;;=============================kernel thread health set end==================================;; 
+
+
+
+
+
+;;===========================kernel thread health get starting===============================;; 
+Kernel_Thread_Health_Get
+                        LDR        R1,   =KER_THREAD_CB              ;load ThrdCB addr
+                        LSLS       R0,   R0, #DEF_KER_TCB_LSFT       ;multiply by TCB size
+                        ADDS       R0,   R1, R0                      ;base + offset
+                        LDRB       R0,   [R0, #DEF_TB_OFF_HLTH]      ;load ThrdCBHlth
+                        BX         LR                                ;return
+;;=============================kernel thread health get end==================================;; 
+
+
+
+
+
+;;========================kernel thread watchdog timeout starting============================;; 
+Kernel_Thread_Health_Check
+                        PUSH       {R4, R5, R6, LR}                  ;push, 8 bytes alignment
+                        MOVS       R0,   #2                          ;thread id counter
+                        LDR        R1,   =KER_THREAD_CB              ;load ThrdCB addr
+                        LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R3,   [R2, #DEF_SV_OFF_TMRSS64L]  ;load SysVarsTmrSS64L
+KER_HLTH_CHK_LOOP
+                        MOVS       R4,   R0                          ;copy val
+                        LSLS       R4,   R4,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
+                        ADDS       R4,   R4, R1                      ;base + offset
+                        LDRB       R5,   [R4, #DEF_TB_OFF_HLTHS]     ;load ThrdCBTHlthSet
+                        TST        R5,   R5                          ;check if 0
+                        BEQ        KER_THRD_HLTH_NEXT                ;skip 
+                        LDR        R5,   [R4, #DEF_TB_OFF_TSTMPL]    ;load ThrdCBTStampL
+                        SUBS       R5,   R3, R5                      ;current-timestamp
+                        LDR        R6,   [R4, #DEF_TB_OFF_WDT]       ;load ThrdCBWdt
+                        CMP        R5,   R6                          ;compare with ThrdCBWdt
+                        BLS        KER_THRD_HLTH_NEXT                ;no need to update flags
+                        LDRB       R5,   [R4, #DEF_TB_OFF_HLTH]      ;load ThrdCBHlth
+                        TST        R5,   R5                          ;check if 0
+                        BEQ        KER_THRD_HLTH_NULL                ;health is 0
+                        SUBS       R5,   R5,  #1                     ;decrease
+                        STRB       R5,   [R4, #DEF_TB_OFF_HLTH]      ;store ThrdCBHlth
+                        BNE        KER_THRD_HLTH_NEXT                ;jmp to next iteration   
+KER_THRD_HLTH_NULL
+                        MOVS       R4,   #0x00                       ;clear flag
+                        STR        R4,   [R2, #DEF_SV_OFF_HLTHOK]    ;store SysVarsHlthOk
+KER_THRD_HLTH_NEXT
+                        ADDS       R0,   R0,  #1                     ;increment TID counter
+                        LDR        R4,   [R2, #DEF_SV_OFF_TCNT]      ;load SysVarsTCnt
+                        CMP        R0,   R4                          ;compare with TID counter
+                        BLO        KER_HLTH_CHK_LOOP                 ;next iteration
+                        LDR        R0,   [R2, #DEF_SV_OFF_HLTHOK]    ;load SysVarsHlthOk
+                        POP        {R4, R5, R6, PC}                  ;return
+;;===========================kernel thread watchdog timeout end==============================;; 
+
+
+
+
+
+;;==============================kernel timeout set starting==================================;; 
+Kernel_Timeout_Set
+                        UXTH       R0,   R0                          ;make only 16 bit
+                        LDR        R1,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R2,   [R1, #DEF_SV_OFF_TMRSS64L]  ;current time
+                        ADDS       R2,   R2, R0                      ;deadline = now + tout
+                        LDR        R1,   [R1, #DEF_SV_OFF_CTID]      ;load SysVarsCTID
+                        LSLS       R1,   R1,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
+                        LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
+                        ADDS       R3,   R3, R1                      ;base + offset
+                        STR        R2,   [R3, #DEF_TB_OFF_TOUT]      ;store deadline
+                        BX         LR                                ;return
+;;=================================kernel timeout set end====================================;; 
+
+
+
+
+
+;;===============================emit literal pool starting==================================;; 
+                        ALIGN      4
+                        LTORG
+;;=================================emit literal pool end=====================================;; 
+
+
+
+
+
+;;============================kernel timeout status get starting=============================;; 
+Kernel_Timeout_Status_Get 
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R1,   [R0, #DEF_SV_OFF_TMRSS64L]  ;current time
+                        LDR        R0,   [R0, #DEF_SV_OFF_CTID]      ;load SysVarsCTID
+                        LSLS       R0,   R0,  #DEF_KER_TCB_LSFT      ;multiply by TCB size
+                        LDR        R2,   =KER_THREAD_CB              ;load ThrdCB addr
+                        ADDS       R0,   R0, R2                      ;base + offset
+                        LDR        R0,   [R0, #DEF_TB_OFF_TOUT]      ;deadline
+                        SUBS       R0,   R0, R1                      ;deadline - now
+                        LSRS       R0,   R0, #31                     ;1 if negative
+                        BX         LR                                ;return
+
+;;==============================kernel timeout status get end================================;; 
+
+
+
+
+
+;;==============================kernel cpu usage get starting================================;; 
+Kernel_CPU_Usage_Get
+                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
+                        LDR        R0,   [R0, #DEF_SV_OFF_USGAVG]    ;load SysVarsUsgAvg val
+                        MOVS       R1,   #205                        ;load constant
+                        MULS       R0,   R1, R0                      ;multiplied by 205
+                        LSRS       R0,   R0, #11                     ;divide by 2048
+                        BX         LR                                ;return
+;;=================================kernel cpu usage get end==================================;; 
 
 
 
@@ -1161,112 +1343,6 @@ KER_PRINT_EXIT                                                       ;print end
 
 
 
-;;==========================kernel tick 64bit SS val get starting============================;;   
-Kernel_Tick_SubSeconds_Get
-                        MRS        R2,   PRIMASK                     ;store interrupt state
-                        CPSID      I                                 ;disable interrupts
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R1,   [R0, #36]                   ;load SysVarsTmrSS64H
-                        LDR        R0,   [R0, #32]                   ;load SysVarsTmrSS64L
-                        MSR        PRIMASK, R2                       ;restore interrupt
-                        BX         LR                                ;return
-;;============================kernel tick 64bit SS val get end===============================;; 
-
-
-
-
-
-;;==========================kernel tick seconds val get starting=============================;; 
-Kernel_Tick_Seconds_Get
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #44]                   ;load SysVarsTmrS
-                        BX         LR                                ;return
-;;============================kernel tick seconds val get end================================;; 
-
-
-
-
-
-;;==============================kernel timeout set starting==================================;; 
-Kernel_Timeout_Set
-                        PUSH       {R4, LR}                          ;push, 8 bytes alignment
-                        MOV        R4,   R0                          ;copy arg
-                        BL         Kernel_Tick_SubSeconds_Get        ;get 64bit timestamp
-                        MOVS       R2,   #0x00                       ;clear reg
-                        ADDS       R0,   R0, R4                      ;SysVarsTmrSS64L + tout
-                        ADCS       R1,   R1, R2                      ;SysVarsTmrSS64H + carry
-                        LDR        R2,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R2,   [R2, #4]                    ;load SysVarsCTID
-                        LSLS       R2,   R2, #DEF_KER_TCB_LSFT       ;multiply by TCB size
-                        LDR        R3,   =KER_THREAD_CB              ;load ThrdCB addr
-                        ADDS       R3,   R3, R2                      ;base + offset
-                        MRS        R4,   PRIMASK                     ;store interrupt state
-                        CPSID      I                                 ;disable interrupts
-                        STR        R0,   [R3, #16]                   ;store ThrdCBToutL
-                        STR        R1,   [R3, #20]                   ;store ThrdCBToutH
-                        MSR        PRIMASK, R4                       ;restore interrupt
-                        POP        {R4, PC}                          ;return
-;;=================================kernel timeout set end====================================;; 
-
-
-
-
-
-;;===============================emit literal pool starting==================================;; 
-                        ALIGN      4
-                        LTORG
-;;=================================emit literal pool end=====================================;; 
-
-
-
-
-
-;;============================kernel timeout status get starting=============================;; 
-Kernel_Timeout_Status 
-                        PUSH       {R4, LR}                          ;push, 8 bytes alignment
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #4]                    ;load SysVarsCTID
-                        LSLS       R0,   R0, #DEF_KER_TCB_LSFT       ;multiply by TCB size
-                        LDR        R1,   =KER_THREAD_CB              ;load ThrdCB addr
-                        ADDS       R4,   R1, R0                      ;base + offset
-                        BL         Kernel_Tick_SubSeconds_Get        ;get 64bit timestamp
-                        MRS        R2,   PRIMASK                     ;store interrupt state
-                        CPSID      I                                 ;disable interrupts
-                        LDR        R3,   [R4, #16]                   ;load ThrdCBToutL
-                        LDR        R4,   [R4, #20]                   ;load ThrdCBToutH
-                        MSR        PRIMASK, R2                       ;restore interrupt
-                        CMP        R1,   R4                          ;compare high words
-                        BHI        KER_IS_TOUT_TRUE                  ;jump to true
-                        BLO        KER_IS_TOUT_FALSE                 ;jump to false
-                        CMP        R0,   R3                          ;compare low words
-                        BHI        KER_IS_TOUT_TRUE                  ;jump to true
-KER_IS_TOUT_FALSE                                                    ;timeout not occoured
-                        MOVS       R0,   #0x00                       ;load false flag
-                        B          KER_IS_TOUT_EXIT                  ;jump to exit
-KER_IS_TOUT_TRUE                                                     ;timeout occoured
-                        MOVS       R0,   #0x01                       ;load true flag
-KER_IS_TOUT_EXIT                                                     ;exit label
-                        POP        {R4, PC}                          ;return
-;;==============================kernel timeout status get end================================;; 
-
-
-
-
-
-;;==============================kernel cpu usage get starting================================;; 
-Kernel_CPU_Usage_Get
-                        LDR        R0,   =KER_SYS_VARS               ;load SysVars addr
-                        LDR        R0,   [R0, #60]                   ;load SysVarsUsgAvg val
-                        MOVS       R1,   #205                        ;load constant
-                        MULS       R0,   R1, R0                      ;multiplied by 205
-                        LSRS       R0,   R0, #11                     ;divide by 2048
-                        BX         LR                                ;return
-;;=================================kernel cpu usage get end==================================;; 
-
-
-
-
-
 ;;============================kernel version major get starting==============================;; 
 Kernel_Version_Major_Get
                         MOVS       R0,   #DEF_KERNEL_VER_MAJOR       ;load kernel ver major val
@@ -1287,11 +1363,11 @@ Kernel_Version_Minor_Get
 
 
 
-;;============================kernel version patch get starting==============================;;
+;;============================kernel version patch get starting==============================;; 
 Kernel_Version_Patch_Get
                         MOVS       R0,   #DEF_KERNEL_VER_PATCH       ;load kernel ver patch val
                         BX         LR                                ;return
-;;==============================kernel version patch get end=================================;;
+;;==============================kernel version patch get end=================================;; 
 
 
 
@@ -1301,7 +1377,6 @@ Kernel_Version_Patch_Get
                         ALIGN      4
                         END                                          ;end of file
 ;;====================================kernel file end========================================;; 
-
 
 
 
